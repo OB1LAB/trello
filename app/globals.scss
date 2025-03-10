@@ -1,0 +1,38 @@
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  background: #0f131a;
+  main {
+    padding-top: 30px;
+    padding-bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  textarea {
+    min-height: 100px;
+  }
+}
+
+.modalFooter {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  button {
+    width: 200px;
+  }
+}
