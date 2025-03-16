@@ -3,6 +3,7 @@ import useTrelloStore from "../useTrelloStore/useTrelloStore";
 import { useState } from "react";
 import { setTimeout } from "node:timers";
 import useUserStore from "@/modules/useUserStore/useUserStore";
+import { SketchPicker } from "react-color";
 import styles from "./TrelloColumn.module.scss";
 
 const ModalAddTask = () => {
@@ -38,34 +39,39 @@ const ModalAddTask = () => {
         setIsOpen(-1, false);
       }}
     >
-      <Modal.Header>
+      <Modal.Header className="modalHeader">
         <Modal.Title>Добавление задачи</Modal.Title>
       </Modal.Header>
       <Modal.Body className="modalBody">
-        <Input
-          value={content}
-          onChange={setContent}
-          as="textarea"
-          onPressEnter={addNewTask}
-          placeholder="Задача"
-        />
-        <div className={styles.taskPicker}>
-          <SelectPicker
-            className={styles.pickUser}
-            locale={{ searchPlaceholder: "Поиск..." }}
-            data={users}
-            value={executorId}
-            onChange={setExecutorId}
-            placeholder="Исполнитель (Опционально)"
-          />
-          <DatePicker
-            isoWeek
-            className={styles.date}
-            value={dateEnd}
-            onChange={setDateEnd}
-            placeholder="Месяц-День-Год"
-            format="MM-dd-yyy"
-          />
+        <div className={styles.contentInput}>
+          <SketchPicker color="red" />
+          <div className={styles.content}>
+            <Input
+              value={content}
+              onChange={setContent}
+              as="textarea"
+              placeholder="Задача"
+              onPressEnter={addNewTask}
+            />
+            <div className={styles.taskPicker}>
+              <SelectPicker
+                className={styles.pickUser}
+                locale={{ searchPlaceholder: "Поиск..." }}
+                data={users}
+                value={executorId}
+                onChange={setExecutorId}
+                placeholder="Исполнитель (Опционально)"
+              />
+              <DatePicker
+                isoWeek
+                className={styles.date}
+                value={dateEnd}
+                onChange={setDateEnd}
+                placeholder="Месяц-День-Год (Опционально)"
+                format="MM-dd-yyy"
+              />
+            </div>
+          </div>
         </div>
       </Modal.Body>
       <Modal.Footer className="modalFooter">

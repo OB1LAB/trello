@@ -33,7 +33,7 @@ export default function TrelloColumn({
           <TrelloTask key={taskIndex} task={task} />
         ))}
         <Button
-          appearance="subtle"
+          appearance="primary"
           onClick={() => setIsOpenModalAddTask(columnIndex, true)}
           className={styles.newTask}
         >

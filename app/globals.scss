@@ -19,12 +19,16 @@ body {
   }
 }
 
+.modalHeader {
+  text-align: center;
+}
+
 .modalBody {
   display: flex;
   flex-direction: column;
   gap: 5px;
   textarea {
-    min-height: 100px;
+    min-height: 195px;
   }
 }
 

@@ -20,18 +20,49 @@
   }
 }
 
+.content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentInput {
+  display: flex;
+  gap: 15px;
+}
+
 .taskPicker {
   display: flex;
-  gap: 10px;
-  .pickUser {
-    min-width: 300px;
-  }
-  .date {
-    width: 100%;
-  }
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
 }
 
 .newTask {
   width: 100%;
-  margin-top: 15px;
 }
+
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  .task {
+    border-left: 3px solid magenta;
+    padding: 2px 0 2px 7px;
+    overflow-wrap: break-word;
+    .taskContent {
+      font-size: 16px;
+    }
+    .taskData {
+      font-size: 15px;
+      color: #e4e4e4;
+      margin-top: 10px;
+    }
+    .space {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+  }
+}
+

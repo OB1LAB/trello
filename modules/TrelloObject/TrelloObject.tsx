@@ -23,7 +23,8 @@ export default function TrelloObject() {
       })}
       <div className={styles.addColumn}>
         <Button
-          appearance="subtle"
+          appearance="primary"
+          color="green"
           onClick={() => setIsOpenModalAddColumn(true)}
           disabled={columns.length >= 6}
         >

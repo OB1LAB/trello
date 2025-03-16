@@ -27,7 +27,7 @@ const ModalAddColumn = () => {
         setIsOpen(false);
       }}
     >
-      <Modal.Header>
+      <Modal.Header className="modalHeader">
         <Modal.Title>Добавление столбца</Modal.Title>
       </Modal.Header>
       <Modal.Body className="modalBody">
