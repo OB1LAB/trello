@@ -11,17 +11,26 @@ interface IColumnStore {
   isOpenModalAddColumn: boolean;
   isOpenModalAddTask: boolean;
   selectedColumnIndex: number;
+  isMove: boolean;
+  selectedMoveColumn: number;
+  selectedMoveTask: number;
   setIsOpenModalAddColumn: (isOpenModalAddColumn: boolean) => void;
   setIsOpenModalAddTask: (
     selectedColumnIndex: number,
     isOpenModalAddTask: boolean,
   ) => void;
-  addTask: (executorUserId: number, timeEnd: number, content: string) => void;
+  addTask: (
+    executorUserId: number,
+    timeEnd: number,
+    content: string,
+    color: string,
+  ) => void;
   editTask: (
     taskIndex: number,
     executorUserId: number,
     timeEnd: number,
     content: string,
+    color: string,
   ) => void;
   moveTask: (
     oldColumnIndex: number,
@@ -29,13 +38,19 @@ interface IColumnStore {
     oldTaskIndex: number,
     newTaskIndex: number,
   ) => void;
+  setIsMove: (isMove: boolean) => void;
+  setSelectedMoveColumn: (selectedMoveColumn: number) => void;
+  setSelectedMoveTask: (selectedMoveTask: number) => void;
 }
 
 export default create<IColumnStore>((set, get) => ({
   columns: [],
   isOpenModalAddColumn: false,
   isOpenModalAddTask: false,
+  selectedMoveColumn: -1,
+  selectedMoveTask: -1,
   selectedColumnIndex: 0,
+  isMove: false,
   setIsOpenModalAddColumn(isOpenModalAddColumn) {
     set({ isOpenModalAddColumn });
   },
@@ -62,7 +77,7 @@ export default create<IColumnStore>((set, get) => ({
     columns[newColumnIndex] = tempElement;
     set({ columns });
   },
-  addTask(executorUserId, timeEnd, content) {
+  addTask(executorUserId, timeEnd, content, color) {
     const columns = get().columns;
     const columnIndex = get().selectedColumnIndex;
     const currentDate = new Date();
@@ -80,8 +95,18 @@ export default create<IColumnStore>((set, get) => ({
       dateCreate: currentDate,
       timeEnd: timeEnd !== -1 ? ~~secondsOffset + timeEnd : -1,
       content,
+      color,
     });
   },
-  editTask(taskIndex, executorUserId, timeEnd, content) {},
+  editTask(taskIndex, executorUserId, timeEnd, content, color) {},
   moveTask(oldColumnIndex, newColumnIndex, oldTaskIndex, newTaskIndex) {},
+  setIsMove(isMove) {
+    set({ isMove });
+  },
+  setSelectedMoveColumn(selectedMoveColumn) {
+    set({ selectedMoveColumn });
+  },
+  setSelectedMoveTask(selectedMoveTask) {
+    set({ selectedMoveTask });
+  },
 }));

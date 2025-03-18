@@ -7,6 +7,7 @@ import { SketchPicker } from "react-color";
 import styles from "./TrelloColumn.module.scss";
 
 const ModalAddTask = () => {
+  const [selectedColor, setSelectedColor] = useState<string>("#f0f");
   const [content, setContent] = useState<string>("");
   const [executorId, setExecutorId] = useState<null | number>(null);
   const [dateEnd, setDateEnd] = useState<null | Date>(null);
@@ -24,6 +25,7 @@ const ModalAddTask = () => {
       executorId ? executorId : -1,
       dateEnd ? ~~((dateEnd?.getTime() - new Date().getTime()) / 1000) : -1,
       content,
+      selectedColor,
     );
     setIsOpen(-1, false);
     setTimeout(() => {
@@ -44,7 +46,10 @@ const ModalAddTask = () => {
       </Modal.Header>
       <Modal.Body className="modalBody">
         <div className={styles.contentInput}>
-          <SketchPicker color="red" />
+          <SketchPicker
+            color={selectedColor}
+            onChange={(color) => setSelectedColor(color.hex)}
+          />
           <div className={styles.content}>
             <Input
               value={content}

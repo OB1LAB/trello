@@ -45,13 +45,14 @@
 .tasks {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0;
   .task {
-    border-left: 3px solid magenta;
-    padding: 2px 0 2px 7px;
+    padding: 2px 15px 2px 7px;
     overflow-wrap: break-word;
+    background: #1a1d24;
     .taskContent {
       font-size: 16px;
+      cursor: pointer;
     }
     .taskData {
       font-size: 15px;

@@ -30,7 +30,7 @@ export default function TrelloColumn({
       </div>
       <div className={styles.tasks}>
         {columns[columnIndex].tasks.map((task, taskIndex) => (
-          <TrelloTask key={taskIndex} task={task} />
+          <TrelloTask key={taskIndex} task={task} taskIndex={taskIndex} />
         ))}
         <Button
           appearance="primary"
