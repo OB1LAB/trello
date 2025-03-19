@@ -158,12 +158,14 @@ const TrelloTask = ({
           className={styles.task}
           ref={taskRef}
           style={{
-            borderLeft: `3px solid ${task.color}`,
             opacity: mouseMove.isPressed ? "0.8" : "1",
           }}
         >
           <div
             className={styles.taskContent}
+            style={{
+              borderLeft: `3px solid ${task.color}`,
+            }}
             onMouseDown={(e) => {
               setMouseMove({
                 x: e.clientX,
@@ -178,7 +180,12 @@ const TrelloTask = ({
           >
             {task.content}
           </div>
-          <div className={styles.taskData}>
+          <div
+            style={{
+              borderLeft: `3px solid ${task.color}`,
+            }}
+            className={styles.taskData}
+          >
             <div className={styles.space}>
               <div>{users[task.createdUserId].label}</div>
               {task.executorUserId !== -1 && (
