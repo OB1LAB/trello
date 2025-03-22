@@ -73,8 +73,9 @@ export default create<IColumnStore>((set, get) => ({
   moveColumn(oldColumnIndex, newColumnIndex) {
     const columns = get().columns;
     const tempElement = columns[oldColumnIndex];
-    columns[oldColumnIndex] = columns[newColumnIndex];
-    columns[newColumnIndex] = tempElement;
+    const offset = newColumnIndex > oldColumnIndex ? -1 : 0;
+    columns[oldColumnIndex] = columns[newColumnIndex + offset];
+    columns[newColumnIndex + offset] = tempElement;
     set({ columns });
   },
   addTask(executorUserId, timeEnd, content, color) {
@@ -99,7 +100,18 @@ export default create<IColumnStore>((set, get) => ({
     });
   },
   editTask(taskIndex, executorUserId, timeEnd, content, color) {},
-  moveTask(oldColumnIndex, newColumnIndex, oldTaskIndex, newTaskIndex) {},
+  moveTask(oldColumnIndex, newColumnIndex, oldTaskIndex, newTaskIndex) {
+    const columns = get().columns;
+    const task = columns[oldColumnIndex].tasks.splice(oldTaskIndex, 1)[0];
+    const offset =
+      oldColumnIndex === newColumnIndex
+        ? newTaskIndex > oldTaskIndex
+          ? -1
+          : 0
+        : 0;
+    columns[newColumnIndex].tasks.splice(newTaskIndex + offset, 0, task);
+    set({ columns, isMove: false });
+  },
   setIsMove(isMove) {
     set({ isMove });
   },

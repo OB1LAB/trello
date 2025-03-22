@@ -10,9 +10,11 @@ import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
 const TrelloTask = ({
   task,
   taskIndex,
+  columnIndex,
 }: {
   task: ITask;
   taskIndex: number;
+  columnIndex: number;
 }) => {
   const taskRef = useRef<HTMLDivElement | null>(null);
   const [mouseMove, setMouseMove] = useState<IMouseMove>({
@@ -33,60 +35,92 @@ const TrelloTask = ({
     store.selectedMoveColumn,
     store.selectedMoveTask,
   ]);
-  const [setIsMove, setSelectedMoveTask] = useTrelloStore((store) => [
-    store.setIsMove,
-    store.setSelectedMoveTask,
-  ]);
+  const moveTask = useTrelloStore((store) => store.moveTask);
+  const [setIsMove, setSelectedMoveTask, setSelectedMoveColumn] =
+    useTrelloStore((store) => [
+      store.setIsMove,
+      store.setSelectedMoveTask,
+      store.setSelectedMoveColumn,
+    ]);
 
   const onMouseMove = (event: MouseEvent) => {
     if (mouseMove.isPressed) {
       setMouseMove({
+        ...mouseMove,
         x: event.clientX,
         y: event.clientY,
-        xOffset: -(mouseMove.xOffset + mouseMove.x - event.clientX),
-        yOffset: -(mouseMove.yOffset + mouseMove.y - event.clientY),
         isPressed: true,
       });
     }
   };
 
   const onMouseClick = (event: MouseEvent) => {
+    if (upperFake + underFake > 0) {
+      if (upperFake > 0) {
+        moveTask(selectedMoveColumn, columnIndex, selectedMoveTask, taskIndex);
+      } else if (underFake > 0) {
+        moveTask(
+          selectedMoveColumn,
+          columnIndex,
+          selectedMoveTask,
+          taskIndex + 1,
+        );
+      }
+      setUpperFake(0);
+      setUnderFake(0);
+    }
     if (mouseMove.isPressed && event.button === 0) {
       setMouseMove({
+        ...mouseMove,
         x: event.clientX,
         y: event.clientY,
-        xOffset: 0,
-        yOffset: 0,
         isPressed: false,
       });
       setIsMove(false);
       setSelectedMoveTask(-1);
+      setSelectedMoveColumn(-1);
     }
   };
 
   const onMouseMoveCurrentTask = (event: MouseEvent) => {
-    if (mouseMove.isPressed || !isMove || !taskRef.current) {
+    if (
+      mouseMove.isPressed ||
+      !isMove ||
+      !taskRef.current ||
+      selectedMoveTask === -1
+    ) {
       return;
     }
     const percentMove = event.layerY / taskRef.current.clientHeight;
     if (
       percentMove <= 0.5 &&
-      taskIndex - selectedMoveTask !== 1 &&
-      upperFake === 0
+      (taskIndex - selectedMoveTask !== 1 || columnIndex !== selectedMoveColumn)
     ) {
-      setUpperFake(taskRef.current.clientHeight - 40);
-      if (underFake !== 0) {
-        setUnderFake(0);
-      }
+      setUpperFake(taskRef.current.clientHeight);
+      setUnderFake(0);
     } else if (
       percentMove > 0.5 &&
-      taskIndex - selectedMoveTask !== -1 &&
-      underFake === 0
+      (taskIndex - selectedMoveTask !== -1 ||
+        columnIndex !== selectedMoveColumn)
     ) {
-      setUnderFake(taskRef.current.clientHeight - 40);
-      if (upperFake !== 0) {
-        setUpperFake(0);
-      }
+      setUnderFake(taskRef.current.clientHeight);
+      setUpperFake(0);
+    }
+  };
+
+  const onFirstClick = (event: MouseEvent) => {
+    // @ts-ignore
+    if (event.target.className === styles.taskContent) {
+      setMouseMove({
+        x: event.clientX,
+        y: event.clientY,
+        xOffset: event.layerX,
+        yOffset: event.layerY,
+        isPressed: true,
+      });
+      setIsMove(true);
+      setSelectedMoveTask(taskIndex);
+      setSelectedMoveColumn(columnIndex);
     }
   };
 
@@ -104,17 +138,19 @@ const TrelloTask = ({
       removeEventListener("mousemove", onMouseMove);
       removeEventListener("mouseup", onMouseClick);
     };
-  }, [mouseMove.isPressed]);
+  }, [mouseMove.isPressed, upperFake, underFake]);
 
   useEffect(() => {
     if (taskRef && taskRef.current) {
       taskRef.current.addEventListener("mousemove", onMouseMoveCurrentTask);
+      taskRef.current.addEventListener("mousedown", onFirstClick);
       return () => {
         if (taskRef.current) {
           taskRef.current.removeEventListener(
             "mousemove",
             onMouseMoveCurrentTask,
           );
+          taskRef.current.removeEventListener("mousedown", onFirstClick);
         }
       };
     }
@@ -133,6 +169,7 @@ const TrelloTask = ({
       style={{
         zIndex: mouseMove.isPressed ? "13" : "12",
         pointerEvents: mouseMove.isPressed ? "none" : "all",
+        position: mouseMove.isPressed ? "fixed" : "relative",
       }}
       onMouseLeave={() => {
         if (upperFake !== 0) {
@@ -143,15 +180,14 @@ const TrelloTask = ({
         }
       }}
     >
-      {upperFake !== 0 && (
-        <div
-          style={{ height: upperFake }}
-          // onMouseLeave={() => setUpperFake(0)}
-        ></div>
+      {upperFake !== 0 && isMove && (
+        <div style={{ height: `${upperFake}px` }}></div>
       )}
       <div
         style={{
-          transform: `translate3d(${mouseMove.xOffset}px, ${mouseMove.yOffset}px, 0px)`,
+          top: `${mouseMove.y - mouseMove.yOffset}px`,
+          left: `${mouseMove.x - mouseMove.xOffset}px`,
+          position: mouseMove.isPressed ? "fixed" : "unset",
         }}
       >
         <div
@@ -165,17 +201,6 @@ const TrelloTask = ({
             className={styles.taskContent}
             style={{
               borderLeft: `3px solid ${task.color}`,
-            }}
-            onMouseDown={(e) => {
-              setMouseMove({
-                x: e.clientX,
-                y: e.clientY,
-                xOffset: 0,
-                yOffset: 0,
-                isPressed: true,
-              });
-              setIsMove(true);
-              setSelectedMoveTask(taskIndex);
             }}
           >
             {task.content}
@@ -207,11 +232,8 @@ const TrelloTask = ({
           </div>
         </div>
       </div>
-      {underFake !== 0 && (
-        <div
-          style={{ height: underFake }}
-          // onMouseLeave={() => setUnderFake(0)}
-        ></div>
+      {underFake !== 0 && isMove && (
+        <div style={{ height: `${underFake}px` }}></div>
       )}
     </div>
   );

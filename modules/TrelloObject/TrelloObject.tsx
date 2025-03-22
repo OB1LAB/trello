@@ -6,20 +6,12 @@ import TrelloColumn from "@/modules/TrelloColumn/TrelloColumn";
 import ModalAddColumn from "@/modules/TrelloObject/ModalAddColumn";
 
 export default function TrelloObject() {
-  const isMove = useTrelloStore((store) => store.isMove);
-  // const [selectedMoveTask, selectedMoveColumn] = useTrelloStore((store) => [
-  //   store.selectedMoveTask,
-  //   store.selectedMoveColumn,
-  // ]);
   const [columns, setIsOpenModalAddColumn] = useTrelloStore((store) => [
     store.columns,
     store.setIsOpenModalAddColumn,
   ]);
   return (
-    <div
-      className={styles.columns}
-      style={{ userSelect: isMove ? "none" : "all" }}
-    >
+    <div className={styles.columns}>
       {columns.map((column, columnIndex) => {
         return (
           <TrelloColumn
@@ -29,16 +21,15 @@ export default function TrelloObject() {
           />
         );
       })}
-      <div className={styles.addColumn}>
-        <Button
-          appearance="primary"
-          color="green"
-          onClick={() => setIsOpenModalAddColumn(true)}
-          disabled={columns.length >= 6}
-        >
-          +
-        </Button>
-      </div>
+      <Button
+        appearance="primary"
+        color="green"
+        className={styles.addColumn}
+        onClick={() => setIsOpenModalAddColumn(true)}
+        disabled={columns.length >= 6}
+      >
+        +
+      </Button>
       <ModalAddColumn />
     </div>
   );

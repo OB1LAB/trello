@@ -3,11 +3,9 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 15px;
+  user-select: none;
 }
 
 .addColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  margin-left: 8px;
 }
