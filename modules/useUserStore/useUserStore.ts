@@ -3,6 +3,7 @@ import { createWithEqualityFn as create } from "zustand/traditional";
 import { IUser } from "@/ifaces";
 
 interface IUserStore {
+  isAuth: boolean;
   userId: number;
   userName: string;
   userList: IUser[];
@@ -12,6 +13,7 @@ interface IUserStore {
 }
 
 export default create<IUserStore>((set, get) => ({
+  isAuth: true,
   userId: 0,
   userName: "OB1CHAM",
   userList: [

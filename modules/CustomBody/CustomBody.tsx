@@ -3,6 +3,7 @@ import { ToastContainer } from "react-toastify";
 import { CustomProvider } from "rsuite";
 import localFont from "next/font/local";
 import React from "react";
+import NavBar from "@/modules/NavBar/NavBar";
 
 const NTSomicFont = localFont({ src: "NTSomic.woff2" });
 
@@ -13,6 +14,9 @@ export default function CustomBody({
 }>) {
   return (
     <body className={NTSomicFont.className}>
+      <header>
+        <NavBar />
+      </header>
       <main>
         <CustomProvider theme="dark">{children}</CustomProvider>
         <ToastContainer

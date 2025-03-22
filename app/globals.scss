@@ -7,9 +7,36 @@
 body {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   color: white;
   background: #0f131a;
+  header {
+    nav {
+      &.rs-navbar-default .rs-navbar-item:focus {
+        color: #e9ebf0;
+      }
+      &.rs-navbar-default .rs-navbar-item:hover {
+        background: transparent;
+      }
+      .rs-dropdown-menu {
+        width: 100%;
+        border-radius: 0;
+        gap: 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none!important;
+        .rs-dropdown-item{
+          padding: 0;
+          &:hover {
+            background: transparent;
+          }
+        }
+        button {
+          width: 100%;
+        }
+      }
+    }
+  }
   main {
     padding-top: 30px;
     padding-bottom: 20px;
