@@ -181,7 +181,7 @@ const TrelloTask = ({
       }}
     >
       {upperFake !== 0 && isMove && (
-        <div style={{ height: `${upperFake}px` }}></div>
+        <div className="fake" style={{ height: `${upperFake}px` }}></div>
       )}
       <div
         style={{
@@ -233,7 +233,7 @@ const TrelloTask = ({
         </div>
       </div>
       {underFake !== 0 && isMove && (
-        <div style={{ height: `${underFake}px` }}></div>
+        <div className="fake" style={{ height: `${underFake}px` }}></div>
       )}
     </div>
   );

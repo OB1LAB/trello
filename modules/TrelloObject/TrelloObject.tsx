@@ -4,8 +4,10 @@ import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
 import { Button } from "rsuite";
 import TrelloColumn from "@/modules/TrelloColumn/TrelloColumn";
 import ModalAddColumn from "@/modules/TrelloObject/ModalAddColumn";
+import useUserStore from "@/modules/useUserStore/useUserStore";
 
 export default function TrelloObject() {
+  const isEdit = useUserStore((store) => store.isEdit);
   const [columns, setIsOpenModalAddColumn] = useTrelloStore((store) => [
     store.columns,
     store.setIsOpenModalAddColumn,
@@ -21,15 +23,17 @@ export default function TrelloObject() {
           />
         );
       })}
-      <Button
-        appearance="primary"
-        color="green"
-        className={styles.addColumn}
-        onClick={() => setIsOpenModalAddColumn(true)}
-        disabled={columns.length >= 6}
-      >
-        +
-      </Button>
+      {isEdit && (
+        <Button
+          appearance="primary"
+          color="green"
+          className={styles.addColumn}
+          onClick={() => setIsOpenModalAddColumn(true)}
+          disabled={columns.length >= 5}
+        >
+          +
+        </Button>
+      )}
       <ModalAddColumn />
     </div>
   );

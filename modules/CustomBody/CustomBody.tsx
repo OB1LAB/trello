@@ -4,6 +4,7 @@ import { CustomProvider } from "rsuite";
 import localFont from "next/font/local";
 import React from "react";
 import NavBar from "@/modules/NavBar/NavBar";
+import ModalSelectTrello from "@/modules/ModalSelectTrello/ModalSelectTrello";
 
 const NTSomicFont = localFont({ src: "NTSomic.woff2" });
 
@@ -19,6 +20,7 @@ export default function CustomBody({
       </header>
       <main>
         <CustomProvider theme="dark">{children}</CustomProvider>
+        <ModalSelectTrello />
         <ToastContainer
           position="top-right"
           autoClose={2000}

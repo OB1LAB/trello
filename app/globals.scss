@@ -8,15 +8,28 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: row;
+  align-items: flex-start;
   color: white;
   background: #0f131a;
   header {
     nav {
-      &.rs-navbar-default .rs-navbar-item:focus {
-        color: #e9ebf0;
+      background: transparent!important;
+      .rs-sidenav-toggle {
+        padding-left: 55px;
       }
-      &.rs-navbar-default .rs-navbar-item:hover {
-        background: transparent;
+      .rs-sidenav-toggle button {
+        background: transparent!important;
+      }
+      .rs-sidenav-toggle-collapsed {
+        margin-top: 10px;
+      }
+      .rs-sidenav-item {
+        background: transparent!important;
+      }
+      &.rs-sidenav-default {
+        :focus {
+          color: #e9ebf0;
+        }
       }
       .rs-dropdown-menu {
         width: 100%;
@@ -25,7 +38,7 @@ body {
         padding: 0;
         background: transparent;
         box-shadow: none!important;
-        .rs-dropdown-item{
+        .rs-dropdown-item {
           padding: 0;
           &:hover {
             background: transparent;
@@ -65,5 +78,68 @@ body {
   justify-content: space-between;
   button {
     width: 200px;
+  }
+}
+
+.fake {
+  background: #262a35;
+  opacity: 0.8;
+  border-radius: 5px;
+  &.column {
+    margin: 0 8px;
+  }
+  &:hover {
+    background: #20242c;
+  }
+}
+
+.sketch-picker {
+  background: transparent!important;
+  box-shadow: none!important;
+  padding: 0!important;
+  div:nth-child(3) {
+    :nth-child(1) {
+      input {
+        width: 100%!important;
+      }
+    }
+    :nth-child(3) {
+      display: none!important;
+    }
+    :nth-child(4) {
+      display: none!important;
+    }
+    :nth-child(2) {
+      display: none!important;
+    }
+    :nth-child(5) {
+      display: none!important;
+    }
+  }
+  div[class^="flexbox-fix"]:nth-child(4) {
+    width: 142px;
+    padding: 0!important;
+    border-color: #6b6d75 !important;
+    padding-top: 10px!important;
+    margin-left: 0!important;
+    gap: 9px;
+    padding-left: 1px!important;
+    div {
+      margin: 0!important;
+    }
+  }
+  input {
+    color: white;
+    background: #1a1d24;
+    border: 1px solid #3c3f43!important;
+    box-shadow: none!important;
+    margin-bottom: 8px;
+    padding: 5px!important;
+    &:focus {
+      outline: none;
+    }
+  }
+  label {
+    display: none!important;
   }
 }

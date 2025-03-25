@@ -13,6 +13,13 @@
   border-radius: 5px;
   width: 300px;
 
+  .normalTittle {
+    position: relative;
+    font-size: 16px;
+    padding-bottom: 15px;
+    text-align: center;
+  }
+
   .tittle {
     position: relative;
     display: flex;
@@ -52,6 +59,7 @@
 
 .newTask {
   width: 100%;
+  margin-top: 10px;
 }
 
 .tasks {

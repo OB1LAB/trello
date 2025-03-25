@@ -1,34 +1,87 @@
 import useUserStore from "@/modules/useUserStore/useUserStore";
-import { Button, Nav, Navbar } from "rsuite";
-import Link from "next/link";
+import { Button, Nav, Sidenav } from "rsuite";
 import styles from "./NavBar.module.scss";
 import Avatar from "@rsuite/icons/legacy/Avatar";
+import FolderOpen from "@rsuite/icons//legacy/FolderOpen";
+import Edit2 from "@rsuite/icons//legacy/Edit2";
+import { useState } from "react";
+import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
 
 const NavBar = () => {
+  const setIsModalTrello = useSelectTrelloStore((store) => store.setIsModal);
+  const [openedKeys, setOpenedKeys] = useState<(string | number)[]>([]);
+  const [isExpand, setIsExpand] = useState(false);
   const isAuth = useUserStore((store) => store.isAuth);
   const userName = useUserStore((store) => store.userName);
+  const [isEdit, setIsEdit] = useUserStore((store) => [
+    store.isEdit,
+    store.setIsEdit,
+  ]);
   if (isAuth) {
     return (
-      <Navbar className={styles.nav}>
-        <Nav vertical>
-          <Nav.Item>Trello</Nav.Item>
-          <Nav.Menu title={userName} icon={<Avatar />}>
-            <Nav.Item>
-              <Button appearance="primary" color="red">
-                Выход
-              </Button>
+      <Sidenav
+        openKeys={openedKeys}
+        onOpenChange={setOpenedKeys}
+        expanded={isExpand}
+        className={styles.nav}
+      >
+        <Sidenav.Body>
+          <Nav vertical={true}>
+            <Nav.Item
+              onClick={() => setIsModalTrello(true)}
+              icon={<FolderOpen />}
+            >
+              Доски
             </Nav.Item>
-          </Nav.Menu>
-        </Nav>
-      </Navbar>
+            <Nav.Item
+              active={isEdit}
+              onClick={() => setIsEdit(!isEdit)}
+              icon={<Edit2 />}
+            >
+              Редактировать
+            </Nav.Item>
+            <Nav.Menu
+              eventKey="profile"
+              title={userName}
+              icon={<Avatar />}
+              onClick={(e) => {
+                if (!isExpand) {
+                  e.preventDefault();
+                  setIsExpand(true);
+                  setTimeout(() => {
+                    setOpenedKeys([...openedKeys, "profile"]);
+                  }, 200);
+                }
+              }}
+            >
+              <Nav.Item>
+                <Button appearance="primary" color="red">
+                  Выход
+                </Button>
+              </Nav.Item>
+            </Nav.Menu>
+          </Nav>
+        </Sidenav.Body>
+        <Sidenav.Toggle
+          onToggle={(value) => {
+            setIsExpand(value);
+            setOpenedKeys([]);
+          }}
+        />
+      </Sidenav>
     );
   }
   return (
-    <Navbar className={styles.nav}>
-      <Nav>
-        <Nav.Item>Авторизоваться</Nav.Item>
-      </Nav>
-    </Navbar>
+    <Sidenav expanded={isExpand} className={styles.nav}>
+      <Sidenav.Body>
+        <Nav>
+          <Nav.Item icon={<Avatar />} onClick={() => console.log("auth")}>
+            Авторизоваться
+          </Nav.Item>
+        </Nav>
+      </Sidenav.Body>
+      <Sidenav.Toggle onToggle={setIsExpand} />
+    </Sidenav>
   );
 };
 

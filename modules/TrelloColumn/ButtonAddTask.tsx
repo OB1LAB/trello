@@ -30,7 +30,8 @@ const ButtonAddTask = ({
       !isMove ||
       !buttonRef.current ||
       (selectedMoveColumn === columnIndex &&
-        taskLength - selectedMoveTask === 1)
+        taskLength - selectedMoveTask === 1) ||
+      selectedMoveTask === -1
     ) {
       return;
     }
@@ -74,7 +75,9 @@ const ButtonAddTask = ({
         }
       }}
     >
-      {upperFake > 0 && <div style={{ height: `${upperFake}px` }} />}
+      {upperFake > 0 && (
+        <div className="fake" style={{ height: `${upperFake}px` }} />
+      )}
       <Button
         appearance="primary"
         ref={buttonRef}

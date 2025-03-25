@@ -8,6 +8,7 @@ import ModalAddTask from "@/modules/TrelloColumn/ModalAddTask";
 import TrelloTask from "@/modules/TrelloColumn/TrelloTask";
 import { useEffect, useRef, useState } from "react";
 import ButtonAddTask from "@/modules/TrelloColumn/ButtonAddTask";
+import useUserStore from "@/modules/useUserStore/useUserStore";
 
 export default function TrelloColumn({
   column,
@@ -17,6 +18,7 @@ export default function TrelloColumn({
   columnIndex: number;
 }) {
   const columnRef = useRef<null | HTMLDivElement>(null);
+  const isEdit = useUserStore((store) => store.isEdit);
   const [leftFake, setLeftFake] = useState<number>(0);
   const [rightFake, setRightFake] = useState<number>(0);
   const [mouseMove, setMouseMove] = useState<IMouseMove>({
@@ -48,8 +50,8 @@ export default function TrelloColumn({
       setMouseMove({
         x: event.clientX,
         y: event.clientY,
-        xOffset: event.layerX,
-        yOffset: event.layerY,
+        xOffset: event.layerX + 15,
+        yOffset: event.layerY + 5,
         isPressed: true,
       });
       setIsMove(true);
@@ -102,10 +104,10 @@ export default function TrelloColumn({
     }
     const percentMove = event.offsetX / columnRef.current.clientWidth;
     if (percentMove <= 0.5 && columnIndex - selectedMoveColumn !== 1) {
-      setLeftFake(columnRef.current.clientWidth);
+      setLeftFake(300);
       setRightFake(0);
     } else if (percentMove > 0.5 && columnIndex - selectedMoveColumn !== -1) {
-      setRightFake(columnRef.current.clientWidth);
+      setRightFake(300);
       setLeftFake(0);
     }
   };
@@ -150,7 +152,9 @@ export default function TrelloColumn({
         }
       }}
     >
-      {leftFake > 0 && <div style={{ width: `${leftFake}px` }}></div>}
+      {leftFake > 0 && (
+        <div className="fake column" style={{ width: `${leftFake}px` }}></div>
+      )}
       <div className={styles.paddingColumn} ref={columnRef}>
         <div
           style={{
@@ -163,7 +167,7 @@ export default function TrelloColumn({
           }}
           className={styles.column}
         >
-          <div className={styles.tittle}>
+          <div className={isEdit ? styles.tittle : styles.normalTittle}>
             <div
               className={styles.tittleDiv}
               onClick={() => {
@@ -173,12 +177,14 @@ export default function TrelloColumn({
             >
               {column.title}
             </div>
-            <IconButton
-              onClick={() => removeColumn(columnIndex)}
-              appearance="link"
-              color="red"
-              icon={<CloseIcon />}
-            />
+            {isEdit && (
+              <IconButton
+                onClick={() => removeColumn(columnIndex)}
+                appearance="link"
+                color="red"
+                icon={<CloseIcon />}
+              />
+            )}
           </div>
           <div className={styles.tasks}>
             {columns[columnIndex].tasks.map((task, taskIndex) => (
@@ -197,7 +203,9 @@ export default function TrelloColumn({
           <ModalAddTask />
         </div>
       </div>
-      {rightFake > 0 && <div style={{ width: `${rightFake}px` }}></div>}
+      {rightFake > 0 && (
+        <div className="fake column" style={{ width: `${rightFake}px` }}></div>
+      )}
     </div>
   );
 }
