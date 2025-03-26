@@ -15,6 +15,7 @@ export interface ITask {
 export interface IUser {
   value: number;
   label: string;
+  isAdmin: boolean;
 }
 
 export interface IMouseMove {

@@ -61,7 +61,10 @@ const ModalAddTask = () => {
             <div className={styles.taskPicker}>
               <SelectPicker
                 className={styles.pickUser}
-                locale={{ searchPlaceholder: "Поиск..." }}
+                locale={{
+                  searchPlaceholder: "Поиск...",
+                  noResultsText: "Ничего не найдено .-.",
+                }}
                 data={users}
                 value={executorId}
                 onChange={setExecutorId}

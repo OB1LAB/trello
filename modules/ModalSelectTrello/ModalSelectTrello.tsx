@@ -1,5 +1,6 @@
 import { Button, Modal, SelectPicker } from "rsuite";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
+import BodyEditTrello from "@/modules/ModalSelectTrello/BodyEditTrello";
 import styles from "./ModalSelectTrello.module.scss";
 
 const ModalSelectTrello = () => {
@@ -7,7 +8,14 @@ const ModalSelectTrello = () => {
     store.isModal,
     store.setIsModal,
   ]);
+  const currentTrelloName = useSelectTrelloStore(
+    (store) => store.currentTrelloName,
+  );
   const selectData = useSelectTrelloStore((store) => store.selectData);
+  const [selectedTrello, setSelectedTrello] = useSelectTrelloStore((store) => [
+    store.selectedTrello,
+    store.setSelectedTrello,
+  ]);
   return (
     <Modal
       open={isOpen}
@@ -20,18 +28,22 @@ const ModalSelectTrello = () => {
       </Modal.Header>
       <Modal.Body className="modalBody">
         <SelectPicker
-          locale={{ searchPlaceholder: "Поиск..." }}
+          locale={{
+            searchPlaceholder: "Поиск...",
+            noResultsText: "Ничего не найдено .-.",
+          }}
           data={selectData}
-          // data={users}
-          // value={executorId}
-          // onChange={setExecutorId}
-          placeholder="Исполнитель (Опционально)"
+          value={selectedTrello}
+          cleanable={false}
+          onChange={setSelectedTrello}
         />
+        {selectedTrello === -1 && <BodyEditTrello />}
       </Modal.Body>
       <Modal.Footer className="modalFooter">
         <Button
           appearance="primary"
           color="green"
+          disabled={currentTrelloName.length < 3}
           // onClick={() => addNewTask()}
           // disabled={content.length < 3}
         >
