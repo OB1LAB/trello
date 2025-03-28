@@ -8,10 +8,10 @@ const ModalSelectTrello = () => {
     store.isModal,
     store.setIsModal,
   ]);
-  const currentTrelloName = useSelectTrelloStore(
-    (store) => store.currentTrelloName,
-  );
-  const selectData = useSelectTrelloStore((store) => store.selectData);
+  const [trelloList, selectData] = useSelectTrelloStore((store) => [
+    store.trelloList,
+    store.selectData,
+  ]);
   const [selectedTrello, setSelectedTrello] = useSelectTrelloStore((store) => [
     store.selectedTrello,
     store.setSelectedTrello,
@@ -43,7 +43,7 @@ const ModalSelectTrello = () => {
         <Button
           appearance="primary"
           color="green"
-          disabled={currentTrelloName.length < 3}
+          disabled={trelloList[selectedTrello].trelloName.length < 3}
           // onClick={() => addNewTask()}
           // disabled={content.length < 3}
         >

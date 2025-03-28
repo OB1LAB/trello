@@ -9,6 +9,7 @@ import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloSto
 
 const NavBar = () => {
   const setIsModalTrello = useSelectTrelloStore((store) => store.setIsModal);
+  const setIsModalAuth = useUserStore((store) => store.setIsModalAuthOpen);
   const [openedKeys, setOpenedKeys] = useState<(string | number)[]>([]);
   const [isExpand, setIsExpand] = useState(false);
   const isAuth = useUserStore((store) => store.isAuth);
@@ -75,7 +76,7 @@ const NavBar = () => {
     <Sidenav expanded={isExpand} className={styles.nav}>
       <Sidenav.Body>
         <Nav>
-          <Nav.Item icon={<Avatar />} onClick={() => console.log("auth")}>
+          <Nav.Item icon={<Avatar />} onClick={() => setIsModalAuth(true)}>
             Авторизоваться
           </Nav.Item>
         </Nav>
