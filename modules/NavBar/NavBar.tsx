@@ -4,7 +4,7 @@ import styles from "./NavBar.module.scss";
 import Avatar from "@rsuite/icons/legacy/Avatar";
 import FolderOpen from "@rsuite/icons//legacy/FolderOpen";
 import Edit2 from "@rsuite/icons//legacy/Edit2";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
 
 const NavBar = () => {
@@ -18,6 +18,13 @@ const NavBar = () => {
     store.isEdit,
     store.setIsEdit,
   ]);
+  const [checkAuth, logout] = useUserStore((store) => [
+    store.checkAuth,
+    store.logout,
+  ]);
+  useEffect(() => {
+    checkAuth();
+  }, []);
   if (isAuth) {
     return (
       <Sidenav
@@ -56,7 +63,7 @@ const NavBar = () => {
               }}
             >
               <Nav.Item>
-                <Button appearance="primary" color="red">
+                <Button appearance="primary" color="red" onClick={logout}>
                   Выход
                 </Button>
               </Nav.Item>
