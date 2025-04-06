@@ -16,6 +16,7 @@ const ModalSelectTrello = () => {
     store.selectedTrello,
     store.setSelectedTrello,
   ]);
+  const create = useSelectTrelloStore((store) => store.create);
   return (
     <Modal
       open={isOpen}
@@ -40,15 +41,18 @@ const ModalSelectTrello = () => {
         {selectedTrello === -1 && <BodyEditTrello />}
       </Modal.Body>
       <Modal.Footer className="modalFooter">
-        <Button
-          appearance="primary"
-          color="green"
-          disabled={trelloList[selectedTrello].trelloName.length < 3}
-          // onClick={() => addNewTask()}
-          // disabled={content.length < 3}
-        >
-          Добавить
-        </Button>
+        {selectedTrello === -1 && (
+          <Button
+            appearance="primary"
+            color="green"
+            disabled={trelloList[selectedTrello].trelloName.length < 3}
+            onClick={async () => {
+              await create();
+            }}
+          >
+            Добавить
+          </Button>
+        )}
         <Button
           appearance="primary"
           color="red"

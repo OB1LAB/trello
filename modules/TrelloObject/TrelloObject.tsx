@@ -5,13 +5,27 @@ import { Button } from "rsuite";
 import TrelloColumn from "@/modules/TrelloColumn/TrelloColumn";
 import ModalAddColumn from "@/modules/TrelloObject/ModalAddColumn";
 import useUserStore from "@/modules/useUserStore/useUserStore";
+import { useEffect } from "react";
+import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
 
-export default function TrelloObject() {
-  const isEdit = useUserStore((store) => store.isEdit);
-  const [columns, setIsOpenModalAddColumn] = useTrelloStore((store) => [
-    store.columns,
-    store.setIsOpenModalAddColumn,
+export default function TrelloObject({ trelloId }: { trelloId: number }) {
+  const [trelloList, setSelectedTrello] = useSelectTrelloStore((store) => [
+    store.trelloList,
+    store.setSelectedTrello,
   ]);
+  const isEdit = useUserStore((store) => store.isEdit);
+  const [columns, setIsOpenModalAddColumn, setColumns] = useTrelloStore(
+    (store) => [store.columns, store.setIsOpenModalAddColumn, store.setColumns],
+  );
+  useEffect(() => {
+    if (Object.keys(trelloList).includes(trelloId.toString())) {
+      setSelectedTrello(trelloId);
+      setColumns(trelloList[trelloId].trello);
+    }
+  }, []);
+  if (!Object.keys(trelloList).includes(trelloId.toString())) {
+    return <div>Трелло с ID {trelloId} не найден</div>;
+  }
   return (
     <div className={styles.columns}>
       {columns.map((column, columnIndex) => {

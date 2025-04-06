@@ -19,6 +19,7 @@ export default function TrelloColumn({
 }) {
   const columnRef = useRef<null | HTMLDivElement>(null);
   const isEdit = useUserStore((store) => store.isEdit);
+  const [columnPress, setColumnPress] = useState<boolean>(false);
   const [leftFake, setLeftFake] = useState<number>(0);
   const [rightFake, setRightFake] = useState<number>(0);
   const [mouseMove, setMouseMove] = useState<IMouseMove>({
@@ -46,26 +47,30 @@ export default function TrelloColumn({
 
   const onFirstClick = (event: MouseEvent) => {
     // @ts-ignore
-    if (event.target.className === styles.tittleDiv) {
+    if (event.target.className === styles.tittleDiv && event.button === 0) {
       setMouseMove({
         x: event.clientX,
         y: event.clientY,
         xOffset: event.layerX + 15,
         yOffset: event.layerY + 5,
-        isPressed: true,
+        isPressed: false,
       });
+      setColumnPress(true);
       setIsMove(true);
       setSelectedMoveColumn(columnIndex);
     }
   };
 
   const onMouseMove = (event: MouseEvent) => {
-    if (mouseMove.isPressed) {
+    if (
+      mouseMove.isPressed ||
+      (columnPress &&
+        (mouseMove.x !== event.clientX || mouseMove.y !== event.clientY))
+    ) {
       setMouseMove({
+        ...mouseMove,
         x: event.clientX,
         y: event.clientY,
-        xOffset: mouseMove.xOffset,
-        yOffset: mouseMove.yOffset,
         isPressed: true,
       });
     }
@@ -81,7 +86,10 @@ export default function TrelloColumn({
       setLeftFake(0);
       setRightFake(0);
     }
-    if (mouseMove.isPressed && event.button === 0) {
+    if (columnPress && event.button === 0) {
+      if (mouseMove.x === event.clientX && mouseMove.y === event.clientY) {
+        console.log("Клик по колонке");
+      }
       setMouseMove({
         ...mouseMove,
         x: event.clientX,
@@ -89,12 +97,14 @@ export default function TrelloColumn({
         isPressed: false,
       });
       setIsMove(false);
+      setColumnPress(false);
       setSelectedMoveColumn(-1);
     }
   };
 
   const onMouseMoveCurrentTask = (event: MouseEvent) => {
     if (
+      columnPress ||
       mouseMove.isPressed ||
       !isMove ||
       !columnRef.current ||
@@ -119,7 +129,7 @@ export default function TrelloColumn({
       removeEventListener("mousemove", onMouseMove);
       removeEventListener("mouseup", onMouseClick);
     };
-  }, [mouseMove.isPressed, leftFake, rightFake]);
+  }, [mouseMove.isPressed, columnPress, leftFake, rightFake]);
 
   useEffect(() => {
     if (columnRef && columnRef.current) {
@@ -135,7 +145,7 @@ export default function TrelloColumn({
         }
       };
     }
-  }, [columnRef, isMove, mouseMove.isPressed, selectedMoveColumn]);
+  }, [columnRef, isMove, mouseMove.isPressed, columnPress, selectedMoveColumn]);
 
   return (
     <div
@@ -168,15 +178,7 @@ export default function TrelloColumn({
           className={styles.column}
         >
           <div className={isEdit ? styles.tittle : styles.normalTittle}>
-            <div
-              className={styles.tittleDiv}
-              onClick={() => {
-                setIsMove(true);
-                setSelectedMoveColumn(columnIndex);
-              }}
-            >
-              {column.title}
-            </div>
+            <div className={styles.tittleDiv}>{column.title}</div>
             {isEdit && (
               <IconButton
                 onClick={() => removeColumn(columnIndex)}

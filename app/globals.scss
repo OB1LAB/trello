@@ -93,6 +93,12 @@ body {
   }
 }
 
+.trelloAuth {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .sketch-picker {
   background: transparent!important;
   box-shadow: none!important;
@@ -142,4 +148,16 @@ body {
   label {
     display: none!important;
   }
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #bbbbbb;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #3c3c3c;
 }

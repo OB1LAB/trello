@@ -1,7 +1,9 @@
 "use client";
 import { createWithEqualityFn as create } from "zustand/traditional";
-import { IColumn } from "@/ifaces";
+import { IColumn, ITask } from "@/ifaces";
 import useUserStore from "@/modules/useUserStore/useUserStore";
+import useSocketStore from "@/modules/useSocketStore/useSocketStore";
+import { ClientEvents } from "@/consts";
 
 interface IColumnStore {
   columns: IColumn[];
@@ -25,6 +27,15 @@ interface IColumnStore {
     content: string,
     color: string,
   ) => void;
+  socketAddTask: (userId: number, columnIndex: number, task: ITask) => void;
+  socketAddColumn: (userId: number, title: string) => void;
+  setColumns: (columns: IColumn[]) => void;
+  socketRemoveColumn: (userId: number, columnIndex: number) => void;
+  socketMoveColumn: (
+    userId: number,
+    oldColumnIndex: number,
+    newColumnIndex: number,
+  ) => void;
   editTask: (
     taskIndex: number,
     executorUserId: number,
@@ -37,6 +48,14 @@ interface IColumnStore {
     newColumnIndex: number,
     oldTaskIndex: number,
     newTaskIndex: number,
+  ) => void;
+  socketMoveTask: (
+    userId: number,
+    oldColumnIndex: number,
+    newColumnIndex: number,
+    oldTaskIndex: number,
+    newTaskIndex: number,
+    offset: number,
   ) => void;
   setIsMove: (isMove: boolean) => void;
   setSelectedMoveColumn: (selectedMoveColumn: number) => void;
@@ -57,7 +76,38 @@ export default create<IColumnStore>((set, get) => ({
   setIsOpenModalAddTask(selectedColumnIndex, isOpenModalAddTask) {
     set({ selectedColumnIndex, isOpenModalAddTask });
   },
+  setColumns(columns: IColumn[]) {
+    set({ columns });
+    useSocketStore.getState().socket?.removeAllListeners();
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.addColumn, get().socketAddColumn);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.removeColumn, get().socketRemoveColumn);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.moveColumn, get().socketMoveColumn);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.addTask, get().socketAddTask);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.moveTask, get().socketMoveTask);
+  },
   addColumn(title) {
+    useSocketStore.getState().socket?.emit(ClientEvents.addColumn, title);
+    const columns = get().columns;
+    columns.push({
+      title,
+      tasks: [],
+    });
+    set({ columns });
+  },
+  socketAddColumn(userId, title) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
     const columns = get().columns;
     columns.push({
       title,
@@ -66,21 +116,46 @@ export default create<IColumnStore>((set, get) => ({
     set({ columns });
   },
   removeColumn(columnIndex) {
+    useSocketStore
+      .getState()
+      .socket?.emit(ClientEvents.removeColumn, columnIndex);
+    const columns = get().columns;
+    columns.splice(columnIndex, 1);
+    set({ columns });
+  },
+  socketRemoveColumn(userId, columnIndex) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
     const columns = get().columns;
     columns.splice(columnIndex, 1);
     set({ columns });
   },
   moveColumn(oldColumnIndex, newColumnIndex) {
+    useSocketStore
+      .getState()
+      .socket?.emit(ClientEvents.moveColumn, oldColumnIndex, newColumnIndex);
     const columns = get().columns;
-    const tempElement = columns[oldColumnIndex];
-    const offset = newColumnIndex > oldColumnIndex ? -1 : 0;
-    columns[oldColumnIndex] = columns[newColumnIndex + offset];
-    columns[newColumnIndex + offset] = tempElement;
+    columns.splice(newColumnIndex, 0, columns[oldColumnIndex]);
+    columns.splice(
+      oldColumnIndex + (oldColumnIndex > newColumnIndex ? 1 : 0),
+      1,
+    );
+    set({ columns });
+  },
+  socketMoveColumn(userId, oldColumnIndex, newColumnIndex) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const columns = get().columns;
+    columns.splice(newColumnIndex, 0, columns[oldColumnIndex]);
+    columns.splice(
+      oldColumnIndex + (oldColumnIndex > newColumnIndex ? 1 : 0),
+      1,
+    );
     set({ columns });
   },
   addTask(executorUserId, timeEnd, content, color) {
-    const columns = get().columns;
-    const columnIndex = get().selectedColumnIndex;
     const currentDate = new Date();
     const secondsOffset =
       currentDate.getHours() * 3600 +
@@ -90,17 +165,50 @@ export default create<IColumnStore>((set, get) => ({
     currentDate.setHours(0);
     currentDate.setMinutes(0);
     currentDate.setSeconds(0);
+    timeEnd = timeEnd !== -1 ? ~~secondsOffset + timeEnd : -1;
+    const columnIndex = get().selectedColumnIndex;
+    useSocketStore
+      .getState()
+      .socket?.emit(
+        ClientEvents.addTask,
+        executorUserId,
+        currentDate,
+        timeEnd,
+        content,
+        color,
+        columnIndex,
+      );
+    const columns = get().columns;
     columns[columnIndex].tasks.push({
       createdUserId: useUserStore.getState().userId,
       executorUserId,
       dateCreate: currentDate,
-      timeEnd: timeEnd !== -1 ? ~~secondsOffset + timeEnd : -1,
+      timeEnd,
       content,
       color,
     });
+    set({ columns });
+  },
+  socketAddTask(userId, columnIndex, task) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const columns = get().columns;
+    task.dateCreate = new Date(task.dateCreate);
+    columns[columnIndex].tasks.push(task);
+    set({ columns });
   },
   editTask(taskIndex, executorUserId, timeEnd, content, color) {},
   moveTask(oldColumnIndex, newColumnIndex, oldTaskIndex, newTaskIndex) {
+    useSocketStore
+      .getState()
+      .socket?.emit(
+        ClientEvents.moveTask,
+        oldColumnIndex,
+        newColumnIndex,
+        oldTaskIndex,
+        newTaskIndex,
+      );
     const columns = get().columns;
     const task = columns[oldColumnIndex].tasks.splice(oldTaskIndex, 1)[0];
     const offset =
@@ -109,6 +217,22 @@ export default create<IColumnStore>((set, get) => ({
           ? -1
           : 0
         : 0;
+    columns[newColumnIndex].tasks.splice(newTaskIndex + offset, 0, task);
+    set({ columns, isMove: false });
+  },
+  socketMoveTask(
+    userId,
+    oldColumnIndex,
+    newColumnIndex,
+    oldTaskIndex,
+    newTaskIndex,
+    offset,
+  ) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const columns = get().columns;
+    const task = columns[oldColumnIndex].tasks.splice(oldTaskIndex, 1)[0];
     columns[newColumnIndex].tasks.splice(newTaskIndex + offset, 0, task);
     set({ columns, isMove: false });
   },

@@ -18,6 +18,22 @@ export interface IUser {
   isAdmin: boolean;
 }
 
+export interface ITrello {
+  accessUsers: number[];
+  createdUser: number;
+  trello: IColumn[];
+  trelloName: string;
+}
+
+export interface ISelectPickerData {
+  label: string;
+  value: number;
+}
+
+export interface ITrelloList {
+  [trelloId: number]: ITrello;
+}
+
 export interface IMouseMove {
   x: number;
   y: number;

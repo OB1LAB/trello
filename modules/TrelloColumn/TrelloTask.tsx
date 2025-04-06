@@ -24,6 +24,7 @@ const TrelloTask = ({
     yOffset: 0,
     isPressed: false,
   });
+  const [taskPress, setTaskPress] = useState<boolean>(false);
   const [upperFake, setUpperFake] = useState<number>(0);
   const [underFake, setUnderFake] = useState<number>(0);
   const [outputTime, setOutputTime] = useState<string>(
@@ -44,7 +45,11 @@ const TrelloTask = ({
     ]);
 
   const onMouseMove = (event: MouseEvent) => {
-    if (mouseMove.isPressed) {
+    if (
+      mouseMove.isPressed ||
+      (taskPress &&
+        (mouseMove.x !== event.clientX || mouseMove.y !== event.clientY))
+    ) {
       setMouseMove({
         ...mouseMove,
         x: event.clientX,
@@ -69,7 +74,10 @@ const TrelloTask = ({
       setUpperFake(0);
       setUnderFake(0);
     }
-    if (mouseMove.isPressed && event.button === 0) {
+    if (taskPress && event.button === 0) {
+      if (mouseMove.x === event.clientX && mouseMove.y === event.clientY) {
+        console.log("Клик по таску");
+      }
       setMouseMove({
         ...mouseMove,
         x: event.clientX,
@@ -77,18 +85,14 @@ const TrelloTask = ({
         isPressed: false,
       });
       setIsMove(false);
+      setTaskPress(false);
       setSelectedMoveTask(-1);
       setSelectedMoveColumn(-1);
     }
   };
 
   const onMouseMoveCurrentTask = (event: MouseEvent) => {
-    if (
-      mouseMove.isPressed ||
-      !isMove ||
-      !taskRef.current ||
-      selectedMoveTask === -1
-    ) {
+    if (taskPress || !isMove || !taskRef.current || selectedMoveTask === -1) {
       return;
     }
     const percentMove = event.layerY / taskRef.current.clientHeight;
@@ -110,14 +114,15 @@ const TrelloTask = ({
 
   const onFirstClick = (event: MouseEvent) => {
     // @ts-ignore
-    if (event.target.className === styles.taskContent) {
+    if (event.target.className === styles.taskContent && event.button === 0) {
       setMouseMove({
         x: event.clientX,
         y: event.clientY,
         xOffset: event.layerX,
         yOffset: event.layerY,
-        isPressed: true,
+        isPressed: false,
       });
+      setTaskPress(true);
       setIsMove(true);
       setSelectedMoveTask(taskIndex);
       setSelectedMoveColumn(columnIndex);
@@ -138,7 +143,7 @@ const TrelloTask = ({
       removeEventListener("mousemove", onMouseMove);
       removeEventListener("mouseup", onMouseClick);
     };
-  }, [mouseMove.isPressed, upperFake, underFake]);
+  }, [mouseMove.isPressed, taskPress, upperFake, underFake]);
 
   useEffect(() => {
     if (taskRef && taskRef.current) {
@@ -158,6 +163,7 @@ const TrelloTask = ({
     taskRef,
     isMove,
     mouseMove.isPressed,
+    taskPress,
     underFake,
     upperFake,
     selectedMoveColumn,
@@ -213,12 +219,13 @@ const TrelloTask = ({
           >
             <div className={styles.space}>
               <div>{users[task.createdUserId].label}</div>
-              {task.executorUserId !== -1 && (
-                <>
-                  <LongArrowRight />
-                  <div>{users[task.executorUserId].label}</div>
-                </>
-              )}
+              {task.executorUserId !== -1 &&
+                task.executorUserId !== task.createdUserId && (
+                  <>
+                    <LongArrowRight />
+                    <div>{users[task.executorUserId].label}</div>
+                  </>
+                )}
             </div>
             <div className={styles.space}>
               <div>{moment(task.dateCreate).format("DD-MM-YYYY")}</div>

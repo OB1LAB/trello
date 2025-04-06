@@ -1,6 +1,5 @@
 import { Button, Input, Modal } from "rsuite";
 import useUserStore from "@/modules/useUserStore/useUserStore";
-import styles from "./ModalAuth.module.scss";
 
 const ModalAuth = () => {
   const [isOpen, setIsOpen] = useUserStore((store) => [
@@ -27,8 +26,14 @@ const ModalAuth = () => {
         <Modal.Title>Авторизоваться</Modal.Title>
       </Modal.Header>
       <Modal.Body className="modalBody">
-        <Input placeholder="Номер карты" value={login} onChange={setLogin} />
         <Input
+          id="login"
+          placeholder="Номер карты"
+          value={login}
+          onChange={setLogin}
+        />
+        <Input
+          id="password"
           placeholder="CVV код"
           value={password}
           onChange={setPassword}

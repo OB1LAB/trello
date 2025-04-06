@@ -1,4 +1,4 @@
-import { ITask } from "@/ifaces";
+import { ISelectPickerData, ITask, ITrelloList } from "@/ifaces";
 
 export const convertSecondToOutput = (task: ITask) => {
   let endTime = "";
@@ -39,4 +39,27 @@ export const convertSecondToOutput = (task: ITask) => {
     }
   }
   return endTime;
+};
+
+export const convertTrelloData = (trelloList: ITrelloList) => {
+  const selectData: ISelectPickerData[] = [];
+  for (const trelloId of Object.keys(trelloList)) {
+    selectData.push({
+      label: trelloList[parseInt(trelloId)].trelloName,
+      value: parseInt(trelloId),
+    });
+    for (const column of trelloList[parseInt(trelloId)].trello) {
+      for (const task of column.tasks) {
+        task.dateCreate = new Date(task.dateCreate);
+      }
+    }
+  }
+  selectData.push({ label: "Добавить", value: -1 });
+  trelloList[-1] = {
+    accessUsers: [],
+    createdUser: -1,
+    trello: [],
+    trelloName: "",
+  };
+  return { trelloList, selectData };
 };

@@ -2,17 +2,26 @@ import useUserStore from "@/modules/useUserStore/useUserStore";
 import { Button, Nav, Sidenav } from "rsuite";
 import styles from "./NavBar.module.scss";
 import Avatar from "@rsuite/icons/legacy/Avatar";
-import FolderOpen from "@rsuite/icons//legacy/FolderOpen";
-import Edit2 from "@rsuite/icons//legacy/Edit2";
+import FolderOpen from "@rsuite/icons/legacy/FolderOpen";
+import Edit2 from "@rsuite/icons/legacy/Edit2";
+import Peoples from "@rsuite/icons/legacy/Peoples";
 import { useEffect, useState } from "react";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
 
 const NavBar = () => {
   const setIsModalTrello = useSelectTrelloStore((store) => store.setIsModal);
-  const setIsModalAuth = useUserStore((store) => store.setIsModalAuthOpen);
+  const [setIsModalAuth, setIsModalChangePassword, setIsModalManageUsers] =
+    useUserStore((store) => [
+      store.setIsModalAuthOpen,
+      store.setIsModalChangePassword,
+      store.setIsModalManageUsers,
+    ]);
   const [openedKeys, setOpenedKeys] = useState<(string | number)[]>([]);
   const [isExpand, setIsExpand] = useState(false);
-  const isAuth = useUserStore((store) => store.isAuth);
+  const [isAuth, isAdmin] = useUserStore((store) => [
+    store.isAuth,
+    store.isAdmin,
+  ]);
   const userName = useUserStore((store) => store.userName);
   const [isEdit, setIsEdit] = useUserStore((store) => [
     store.isEdit,
@@ -42,6 +51,12 @@ const NavBar = () => {
               Доски
             </Nav.Item>
             <Nav.Item
+              onClick={() => setIsModalManageUsers(true)}
+              icon={<Peoples />}
+            >
+              Юзер манагер
+            </Nav.Item>
+            <Nav.Item
               active={isEdit}
               onClick={() => setIsEdit(!isEdit)}
               icon={<Edit2 />}
@@ -63,6 +78,14 @@ const NavBar = () => {
               }}
             >
               <Nav.Item>
+                <Button
+                  style={{ marginBottom: "6px" }}
+                  appearance="primary"
+                  color="blue"
+                  onClick={() => setIsModalChangePassword(true)}
+                >
+                  Изменить пароль
+                </Button>
                 <Button appearance="primary" color="red" onClick={logout}>
                   Выход
                 </Button>
