@@ -7,6 +7,7 @@ import ModalAddColumn from "@/modules/TrelloObject/ModalAddColumn";
 import useUserStore from "@/modules/useUserStore/useUserStore";
 import { useEffect } from "react";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
+import UserCursor from "@/modules/TrelloColumn/UserCursor";
 
 export default function TrelloObject({ trelloId }: { trelloId: number }) {
   const [trelloList, setSelectedTrello] = useSelectTrelloStore((store) => [
@@ -49,6 +50,7 @@ export default function TrelloObject({ trelloId }: { trelloId: number }) {
         </Button>
       )}
       <ModalAddColumn />
+      <UserCursor />
     </div>
   );
 }

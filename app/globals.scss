@@ -85,6 +85,9 @@ body {
   background: #262a35;
   opacity: 0.8;
   border-radius: 5px;
+  &.hovered {
+    background: #20242c;
+  }
   &.column {
     margin: 0 8px;
   }

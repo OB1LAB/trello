@@ -6,6 +6,8 @@ import { convertSecondToOutput } from "@/utils";
 import styles from "./TrelloColumn.module.scss";
 import LongArrowRight from "@rsuite/icons/legacy/LongArrowRight";
 import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
+import useSocketStore from "@/modules/useSocketStore/useSocketStore";
+import { ClientEvents } from "@/consts";
 
 const TrelloTask = ({
   task,
@@ -17,6 +19,7 @@ const TrelloTask = ({
   columnIndex: number;
 }) => {
   const taskRef = useRef<HTMLDivElement | null>(null);
+  const selfUserId = useUserStore((store) => store.userId);
   const [mouseMove, setMouseMove] = useState<IMouseMove>({
     x: 0,
     y: 0,
@@ -24,6 +27,13 @@ const TrelloTask = ({
     yOffset: 0,
     isPressed: false,
   });
+  const [lastTimeSend, setLastTimeSend] = useState<number>(
+    new Date().getTime(),
+  );
+  const isHoverSocket = useTrelloStore((store) => store.isHoverSocket);
+  const fakeSize = useTrelloStore((store) => store.fakeSize);
+  const socket = useSocketStore((store) => store.socket);
+  const grabTask = useTrelloStore((store) => store.grabTask);
   const [taskPress, setTaskPress] = useState<boolean>(false);
   const [upperFake, setUpperFake] = useState<number>(0);
   const [underFake, setUnderFake] = useState<number>(0);
@@ -45,11 +55,28 @@ const TrelloTask = ({
     ]);
 
   const onMouseMove = (event: MouseEvent) => {
+    if (grabTask.isMove && grabTask.userId !== selfUserId) {
+      return;
+    }
     if (
       mouseMove.isPressed ||
       (taskPress &&
         (mouseMove.x !== event.clientX || mouseMove.y !== event.clientY))
     ) {
+      const nowTime = new Date().getTime();
+      if (nowTime - lastTimeSend > 16) {
+        socket?.emit(
+          ClientEvents.grabTask,
+          taskIndex,
+          columnIndex,
+          mouseMove.xOffset,
+          mouseMove.yOffset,
+          event.clientX,
+          event.clientY,
+          true,
+        );
+        setLastTimeSend(nowTime);
+      }
       setMouseMove({
         ...mouseMove,
         x: event.clientX,
@@ -60,9 +87,13 @@ const TrelloTask = ({
   };
 
   const onMouseClick = (event: MouseEvent) => {
+    if (grabTask.isMove && grabTask.userId !== selfUserId) {
+      return;
+    }
     if (upperFake + underFake > 0) {
       if (upperFake > 0) {
         moveTask(selectedMoveColumn, columnIndex, selectedMoveTask, taskIndex);
+        socket?.emit(ClientEvents.fakeSize, -1, -1, "top", 0, false);
       } else if (underFake > 0) {
         moveTask(
           selectedMoveColumn,
@@ -70,6 +101,7 @@ const TrelloTask = ({
           selectedMoveTask,
           taskIndex + 1,
         );
+        socket?.emit(ClientEvents.fakeSize, -1, -1, "bottom", 0, false);
       }
       setUpperFake(0);
       setUnderFake(0);
@@ -84,6 +116,16 @@ const TrelloTask = ({
         y: event.clientY,
         isPressed: false,
       });
+      socket?.emit(
+        ClientEvents.grabTask,
+        taskIndex,
+        columnIndex,
+        mouseMove.xOffset,
+        mouseMove.yOffset,
+        event.clientX,
+        event.clientY,
+        false,
+      );
       setIsMove(false);
       setTaskPress(false);
       setSelectedMoveTask(-1);
@@ -92,27 +134,54 @@ const TrelloTask = ({
   };
 
   const onMouseMoveCurrentTask = (event: MouseEvent) => {
+    if (grabTask.isMove && grabTask.userId !== selfUserId) {
+      return;
+    }
     if (taskPress || !isMove || !taskRef.current || selectedMoveTask === -1) {
       return;
     }
     const percentMove = event.layerY / taskRef.current.clientHeight;
     if (
       percentMove <= 0.5 &&
-      (taskIndex - selectedMoveTask !== 1 || columnIndex !== selectedMoveColumn)
+      (taskIndex - selectedMoveTask !== 1 ||
+        columnIndex !== selectedMoveColumn) &&
+      upperFake === 0 &&
+      selectedMoveTask !== -1
     ) {
+      socket?.emit(
+        ClientEvents.fakeSize,
+        taskIndex,
+        columnIndex,
+        "top",
+        taskRef.current.clientHeight,
+        false,
+      );
       setUpperFake(taskRef.current.clientHeight);
       setUnderFake(0);
     } else if (
       percentMove > 0.5 &&
       (taskIndex - selectedMoveTask !== -1 ||
-        columnIndex !== selectedMoveColumn)
+        columnIndex !== selectedMoveColumn) &&
+      underFake === 0 &&
+      selectedMoveTask !== -1
     ) {
+      socket?.emit(
+        ClientEvents.fakeSize,
+        taskIndex,
+        columnIndex,
+        "bottom",
+        taskRef.current.clientHeight,
+        false,
+      );
       setUnderFake(taskRef.current.clientHeight);
       setUpperFake(0);
     }
   };
 
   const onFirstClick = (event: MouseEvent) => {
+    if (grabTask.isMove && grabTask.userId !== selfUserId) {
+      return;
+    }
     // @ts-ignore
     if (event.target.className === styles.taskContent && event.button === 0) {
       setMouseMove({
@@ -143,7 +212,14 @@ const TrelloTask = ({
       removeEventListener("mousemove", onMouseMove);
       removeEventListener("mouseup", onMouseClick);
     };
-  }, [mouseMove.isPressed, taskPress, upperFake, underFake]);
+  }, [
+    mouseMove.isPressed,
+    lastTimeSend,
+    taskPress,
+    upperFake,
+    underFake,
+    grabTask.isMove,
+  ]);
 
   useEffect(() => {
     if (taskRef && taskRef.current) {
@@ -168,39 +244,91 @@ const TrelloTask = ({
     upperFake,
     selectedMoveColumn,
     selectedMoveTask,
+    grabTask.isMove,
   ]);
 
   return (
     <div
       style={{
-        zIndex: mouseMove.isPressed ? "13" : "12",
-        pointerEvents: mouseMove.isPressed ? "none" : "all",
-        position: mouseMove.isPressed ? "fixed" : "relative",
+        zIndex:
+          (grabTask.isMove &&
+            grabTask.taskIndex === taskIndex &&
+            grabTask.columnIndex === columnIndex) ||
+          mouseMove.isPressed
+            ? "13"
+            : "12",
+        pointerEvents:
+          (grabTask.isMove &&
+            grabTask.taskIndex === taskIndex &&
+            grabTask.columnIndex === columnIndex) ||
+          mouseMove.isPressed
+            ? "none"
+            : "all",
+        position:
+          (grabTask.isMove &&
+            grabTask.taskIndex === taskIndex &&
+            grabTask.columnIndex === columnIndex) ||
+          mouseMove.isPressed
+            ? "fixed"
+            : "relative",
       }}
       onMouseLeave={() => {
         if (upperFake !== 0) {
           setUpperFake(0);
+          socket?.emit(ClientEvents.fakeSize, -1, -1, "top", 0, false);
         }
         if (underFake !== 0) {
+          socket?.emit(ClientEvents.fakeSize, -1, -1, "bottom", 0, false);
           setUnderFake(0);
         }
       }}
     >
-      {upperFake !== 0 && isMove && (
-        <div className="fake" style={{ height: `${upperFake}px` }}></div>
+      {((upperFake !== 0 && isMove) ||
+        (grabTask.isMove &&
+          fakeSize.taskIndex === taskIndex &&
+          fakeSize.columnIndex === columnIndex &&
+          fakeSize.side === "top")) && (
+        <div
+          className={isHoverSocket ? "fake hovered" : "fake"}
+          onMouseEnter={() => {
+            if (isMove) {
+              socket?.emit(ClientEvents.hovered, true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (isMove) {
+              socket?.emit(ClientEvents.hovered, false);
+            }
+          }}
+          style={{
+            height: `${upperFake !== 0 && isMove ? upperFake : fakeSize.size}px`,
+          }}
+        ></div>
       )}
       <div
         style={{
-          top: `${mouseMove.y - mouseMove.yOffset}px`,
-          left: `${mouseMove.x - mouseMove.xOffset}px`,
-          position: mouseMove.isPressed ? "fixed" : "unset",
+          top: `${grabTask.isMove && grabTask.taskIndex === taskIndex && grabTask.columnIndex === columnIndex && grabTask.userId !== selfUserId ? grabTask.y - grabTask.yOffset : mouseMove.y - mouseMove.yOffset}px`,
+          left: `${grabTask.isMove && grabTask.taskIndex === taskIndex && grabTask.columnIndex === columnIndex && grabTask.userId !== selfUserId ? grabTask.x - grabTask.xOffset : mouseMove.x - mouseMove.xOffset}px`,
+          position:
+            (grabTask.isMove &&
+              grabTask.taskIndex === taskIndex &&
+              grabTask.columnIndex === columnIndex) ||
+            mouseMove.isPressed
+              ? "fixed"
+              : "unset",
         }}
       >
         <div
           className={styles.task}
           ref={taskRef}
           style={{
-            opacity: mouseMove.isPressed ? "0.8" : "1",
+            opacity:
+              (grabTask.isMove &&
+                grabTask.taskIndex === taskIndex &&
+                grabTask.columnIndex === columnIndex) ||
+              mouseMove.isPressed
+                ? "0.8"
+                : "1",
           }}
         >
           <div
@@ -239,8 +367,27 @@ const TrelloTask = ({
           </div>
         </div>
       </div>
-      {underFake !== 0 && isMove && (
-        <div className="fake" style={{ height: `${underFake}px` }}></div>
+      {((underFake !== 0 && isMove) ||
+        (grabTask.isMove &&
+          fakeSize.taskIndex === taskIndex &&
+          fakeSize.columnIndex === columnIndex &&
+          fakeSize.side === "bottom")) && (
+        <div
+          className={isHoverSocket ? "fake hovered" : "fake"}
+          onMouseEnter={() => {
+            if (isMove) {
+              socket?.emit(ClientEvents.hovered, true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (isMove) {
+              socket?.emit(ClientEvents.hovered, false);
+            }
+          }}
+          style={{
+            height: `${underFake !== 0 && isMove ? underFake : fakeSize.size}px`,
+          }}
+        ></div>
       )}
     </div>
   );

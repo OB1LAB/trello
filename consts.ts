@@ -6,5 +6,7 @@ export class ClientEvents {
   static moveTask = "moveTask";
   static addTask = "addTask";
   static grabTask = "grabTask";
+  static fakeSize = "fakeSize";
+  static hovered = "hovered";
   static grabColumn = "grabColumn";
 }

@@ -1,12 +1,35 @@
 "use client";
 import { createWithEqualityFn as create } from "zustand/traditional";
-import { IColumn, ITask } from "@/ifaces";
+import { IColumn, IFakeSize, IFakeSizeSide, ITask } from "@/ifaces";
 import useUserStore from "@/modules/useUserStore/useUserStore";
 import useSocketStore from "@/modules/useSocketStore/useSocketStore";
 import { ClientEvents } from "@/consts";
 
+interface IGrabTask {
+  userId: number;
+  taskIndex: number;
+  columnIndex: number;
+  xOffset: number;
+  yOffset: number;
+  x: number;
+  y: number;
+  isMove: boolean;
+}
+
 interface IColumnStore {
   columns: IColumn[];
+  grabTask: IGrabTask;
+  fakeSize: IFakeSize;
+  socketGrabTask: (
+    userId: number,
+    taskIndex: number,
+    columnIndex: number,
+    xOffset: number,
+    yOffset: number,
+    x: number,
+    y: number,
+    isMove: boolean,
+  ) => void;
   addColumn: (title: string) => void;
   removeColumn: (columnIndex: number) => void;
   moveColumn: (oldColumnIndex: number, newColumnIndex: number) => void;
@@ -30,7 +53,17 @@ interface IColumnStore {
   socketAddTask: (userId: number, columnIndex: number, task: ITask) => void;
   socketAddColumn: (userId: number, title: string) => void;
   setColumns: (columns: IColumn[]) => void;
+  socketFakeSize: (
+    userId: number,
+    taskIndex: number,
+    columnIndex: number,
+    side: IFakeSizeSide,
+    size: number,
+    isButtonAddTask: boolean,
+  ) => void;
   socketRemoveColumn: (userId: number, columnIndex: number) => void;
+  isHoverSocket: boolean;
+  socketIsHover: (userId: number, isHover: boolean) => void;
   socketMoveColumn: (
     userId: number,
     oldColumnIndex: number,
@@ -65,11 +98,30 @@ interface IColumnStore {
 export default create<IColumnStore>((set, get) => ({
   columns: [],
   isOpenModalAddColumn: false,
+  isHoverSocket: false,
   isOpenModalAddTask: false,
   selectedMoveColumn: -1,
   selectedMoveTask: -1,
+  fakeSize: {
+    userId: -1,
+    taskIndex: -1,
+    columnIndex: -1,
+    side: "bottom",
+    size: 0,
+    isButtonAddTask: false,
+  },
   selectedColumnIndex: 0,
   isMove: false,
+  grabTask: {
+    userId: -1,
+    taskIndex: -1,
+    columnIndex: -1,
+    xOffset: 0,
+    yOffset: 0,
+    x: 0,
+    y: 0,
+    isMove: false,
+  },
   setIsOpenModalAddColumn(isOpenModalAddColumn) {
     set({ isOpenModalAddColumn });
   },
@@ -94,6 +146,15 @@ export default create<IColumnStore>((set, get) => ({
     useSocketStore
       .getState()
       .socket?.on(ClientEvents.moveTask, get().socketMoveTask);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.grabTask, get().socketGrabTask);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.fakeSize, get().socketFakeSize);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.hovered, get().socketIsHover);
   },
   addColumn(title) {
     useSocketStore.getState().socket?.emit(ClientEvents.addColumn, title);
@@ -103,6 +164,52 @@ export default create<IColumnStore>((set, get) => ({
       tasks: [],
     });
     set({ columns });
+  },
+  socketIsHover(userId, isHoverSocket) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    set({ isHoverSocket });
+  },
+  socketFakeSize(userId, taskIndex, columnIndex, side, size, isButtonAddTask) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    set({
+      fakeSize: {
+        userId,
+        taskIndex,
+        columnIndex,
+        side,
+        size,
+        isButtonAddTask,
+      },
+    });
+  },
+  socketGrabTask(
+    userId,
+    taskIndex,
+    columnIndex,
+    xOffset,
+    yOffset,
+    x,
+    y,
+    isMove,
+  ) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const grabTask: IGrabTask = {
+      userId,
+      taskIndex,
+      columnIndex,
+      xOffset,
+      yOffset,
+      x,
+      y,
+      isMove,
+    };
+    set({ grabTask });
   },
   socketAddColumn(userId, title) {
     if (userId === useUserStore.getState().userId) {
@@ -232,9 +339,13 @@ export default create<IColumnStore>((set, get) => ({
       return;
     }
     const columns = get().columns;
+    const grabTask = get().grabTask;
+    if (grabTask.isMove) {
+      grabTask.isMove = false;
+    }
     const task = columns[oldColumnIndex].tasks.splice(oldTaskIndex, 1)[0];
     columns[newColumnIndex].tasks.splice(newTaskIndex + offset, 0, task);
-    set({ columns, isMove: false });
+    set({ columns, isMove: false, grabTask });
   },
   setIsMove(isMove) {
     set({ isMove });

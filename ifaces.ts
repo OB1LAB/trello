@@ -41,3 +41,14 @@ export interface IMouseMove {
   yOffset: number;
   isPressed: boolean;
 }
+
+export interface IFakeSize {
+  userId: number;
+  taskIndex: number;
+  columnIndex: number;
+  side: IFakeSizeSide;
+  size: number;
+  isButtonAddTask: boolean;
+}
+
+export type IFakeSizeSide = "top" | "right" | "bottom" | "left";
