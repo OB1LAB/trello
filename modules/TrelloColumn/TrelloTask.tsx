@@ -1,4 +1,4 @@
-import { IMouseMove, ITask } from "@/ifaces";
+import { IMouseMove, IPressMove, ITask } from "@/ifaces";
 import { useEffect, useRef, useState } from "react";
 import moment from "moment/moment";
 import useUserStore from "@/modules/useUserStore/useUserStore";
@@ -34,7 +34,11 @@ const TrelloTask = ({
   const fakeSize = useTrelloStore((store) => store.fakeSize);
   const socket = useSocketStore((store) => store.socket);
   const grabTask = useTrelloStore((store) => store.grabTask);
-  const [taskPress, setTaskPress] = useState<boolean>(false);
+  const [taskPress, setTaskPress] = useState<IPressMove>({
+    isPress: false,
+    x: 0,
+    y: 0,
+  });
   const [upperFake, setUpperFake] = useState<number>(0);
   const [underFake, setUnderFake] = useState<number>(0);
   const [outputTime, setOutputTime] = useState<string>(
@@ -60,11 +64,11 @@ const TrelloTask = ({
     }
     if (
       mouseMove.isPressed ||
-      (taskPress &&
-        (mouseMove.x !== event.clientX || mouseMove.y !== event.clientY))
+      (taskPress.isPress &&
+        (taskPress.x !== event.clientX || taskPress.y !== event.clientY))
     ) {
       const nowTime = new Date().getTime();
-      if (nowTime - lastTimeSend > 16) {
+      if (nowTime - lastTimeSend > 10) {
         socket?.emit(
           ClientEvents.grabTask,
           taskIndex,
@@ -106,8 +110,8 @@ const TrelloTask = ({
       setUpperFake(0);
       setUnderFake(0);
     }
-    if (taskPress && event.button === 0) {
-      if (mouseMove.x === event.clientX && mouseMove.y === event.clientY) {
+    if (taskPress.isPress && event.button === 0) {
+      if (taskPress.x === event.clientX && taskPress.y === event.clientY) {
         console.log("Клик по таску");
       }
       setMouseMove({
@@ -127,7 +131,7 @@ const TrelloTask = ({
         false,
       );
       setIsMove(false);
-      setTaskPress(false);
+      setTaskPress({ isPress: false, x: 0, y: 0 });
       setSelectedMoveTask(-1);
       setSelectedMoveColumn(-1);
     }
@@ -137,7 +141,12 @@ const TrelloTask = ({
     if (grabTask.isMove && grabTask.userId !== selfUserId) {
       return;
     }
-    if (taskPress || !isMove || !taskRef.current || selectedMoveTask === -1) {
+    if (
+      taskPress.isPress ||
+      !isMove ||
+      !taskRef.current ||
+      selectedMoveTask === -1
+    ) {
       return;
     }
     const percentMove = event.layerY / taskRef.current.clientHeight;
@@ -191,7 +200,11 @@ const TrelloTask = ({
         yOffset: event.layerY,
         isPressed: false,
       });
-      setTaskPress(true);
+      setTaskPress({
+        x: event.clientX,
+        y: event.clientY,
+        isPress: true,
+      });
       setIsMove(true);
       setSelectedMoveTask(taskIndex);
       setSelectedMoveColumn(columnIndex);
@@ -215,7 +228,7 @@ const TrelloTask = ({
   }, [
     mouseMove.isPressed,
     lastTimeSend,
-    taskPress,
+    taskPress.isPress,
     upperFake,
     underFake,
     grabTask.isMove,
@@ -239,7 +252,7 @@ const TrelloTask = ({
     taskRef,
     isMove,
     mouseMove.isPressed,
-    taskPress,
+    taskPress.isPress,
     underFake,
     upperFake,
     selectedMoveColumn,

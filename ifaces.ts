@@ -51,4 +51,10 @@ export interface IFakeSize {
   isButtonAddTask: boolean;
 }
 
+export interface IPressMove {
+  x: number;
+  y: number;
+  isPress: boolean;
+}
+
 export type IFakeSizeSide = "top" | "right" | "bottom" | "left";

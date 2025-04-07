@@ -254,13 +254,17 @@ export default create<IColumnStore>((set, get) => ({
     if (userId === useUserStore.getState().userId) {
       return;
     }
+    const grabTask = get().grabTask;
+    if (grabTask.isMove) {
+      grabTask.isMove = false;
+    }
     const columns = get().columns;
     columns.splice(newColumnIndex, 0, columns[oldColumnIndex]);
     columns.splice(
       oldColumnIndex + (oldColumnIndex > newColumnIndex ? 1 : 0),
       1,
     );
-    set({ columns });
+    set({ columns, grabTask, isMove: false });
   },
   addTask(executorUserId, timeEnd, content, color) {
     const currentDate = new Date();

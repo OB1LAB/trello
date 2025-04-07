@@ -1,5 +1,5 @@
 "use client";
-import { IColumn, IMouseMove } from "@/ifaces";
+import { IColumn, IMouseMove, IPressMove } from "@/ifaces";
 import { IconButton } from "rsuite";
 import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
 import styles from "./TrelloColumn.module.scss";
@@ -23,7 +23,11 @@ export default function TrelloColumn({
   const socket = useSocketStore((store) => store.socket);
   const columnRef = useRef<null | HTMLDivElement>(null);
   const isEdit = useUserStore((store) => store.isEdit);
-  const [columnPress, setColumnPress] = useState<boolean>(false);
+  const [columnPress, setColumnPress] = useState<IPressMove>({
+    isPress: false,
+    x: 0,
+    y: 0,
+  });
   const [leftFake, setLeftFake] = useState<number>(0);
   const [rightFake, setRightFake] = useState<number>(0);
   const grabTask = useTrelloStore((store) => store.grabTask);
@@ -73,7 +77,11 @@ export default function TrelloColumn({
         yOffset: event.layerY + 5,
         isPressed: false,
       });
-      setColumnPress(true);
+      setColumnPress({
+        isPress: true,
+        x: event.clientX,
+        y: event.clientY,
+      });
       setIsMove(true);
       setSelectedMoveColumn(columnIndex);
       setSelectedMoveTask(-1);
@@ -86,11 +94,27 @@ export default function TrelloColumn({
     }
     if (
       mouseMove.isPressed ||
-      (columnPress &&
-        (mouseMove.x !== event.clientX || mouseMove.y !== event.clientY))
+      (columnPress.isPress &&
+        (columnPress.x !== event.clientX || columnPress.y !== event.clientY))
     ) {
+      if (event.buttons === 0) {
+        setMouseMove({
+          ...mouseMove,
+          x: event.clientX,
+          y: event.clientY,
+          isPressed: false,
+        });
+        setIsMove(false);
+        setColumnPress({
+          x: 0,
+          y: 0,
+          isPress: false,
+        });
+        setSelectedMoveColumn(-1);
+        return;
+      }
       const nowTime = new Date().getTime();
-      if (nowTime - lastTimeSend > 16) {
+      if (nowTime - lastTimeSend > 10) {
         socket?.emit(
           ClientEvents.grabTask,
           -1,
@@ -113,48 +137,53 @@ export default function TrelloColumn({
   };
 
   const onMouseClick = (event: MouseEvent) => {
-    if (grabTask.isMove && grabTask.userId !== selfUserId) {
+    if (
+      (grabTask.isMove && grabTask.userId !== selfUserId) ||
+      !(isMove && event.button === 0)
+    ) {
       return;
     }
     if (leftFake + rightFake > 0) {
       if (leftFake > 0) {
         moveColumn(selectedMoveColumn, columnIndex);
-        setTimeout(() => {
-          socket?.emit(ClientEvents.fakeSize, -1, -1, "left", 0, false);
-        }, 10);
+        // setTimeout(() => {
+        socket?.emit(ClientEvents.fakeSize, -1, -1, "left", 0, false);
+        // }, 10);
       } else if (rightFake > 0) {
         moveColumn(selectedMoveColumn, columnIndex + 1);
-        setTimeout(() => {
-          socket?.emit(ClientEvents.fakeSize, -1, -1, "right", 0, false);
-        }, 10);
+        // setTimeout(() => {
+        socket?.emit(ClientEvents.fakeSize, -1, -1, "right", 0, false);
+        // }, 10);
       }
       setLeftFake(0);
       setRightFake(0);
     }
-    if (columnPress && event.button === 0) {
-      if (mouseMove.x === event.clientX && mouseMove.y === event.clientY) {
-        console.log("Клик по колонке");
-      }
-      setMouseMove({
-        ...mouseMove,
-        x: event.clientX,
-        y: event.clientY,
-        isPressed: false,
-      });
-      socket?.emit(
-        ClientEvents.grabTask,
-        -1,
-        columnIndex,
-        mouseMove.xOffset,
-        mouseMove.yOffset,
-        event.clientX,
-        event.clientY,
-        false,
-      );
-      setIsMove(false);
-      setColumnPress(false);
-      setSelectedMoveColumn(-1);
+    if (columnPress.x === event.clientX && columnPress.y === event.clientY) {
+      console.log("Клик по колонке");
     }
+    setMouseMove({
+      ...mouseMove,
+      x: event.clientX,
+      y: event.clientY,
+      isPressed: false,
+    });
+    socket?.emit(
+      ClientEvents.grabTask,
+      -1,
+      columnIndex,
+      mouseMove.xOffset,
+      mouseMove.yOffset,
+      event.clientX,
+      event.clientY,
+      false,
+    );
+    setIsMove(false);
+    setColumnPress({
+      x: 0,
+      y: 0,
+      isPress: false,
+    });
+    setSelectedMoveColumn(-1);
   };
 
   const onMouseMoveCurrentTask = (event: MouseEvent) => {
@@ -162,7 +191,7 @@ export default function TrelloColumn({
       return;
     }
     if (
-      columnPress ||
+      columnPress.isPress ||
       mouseMove.isPressed ||
       !isMove ||
       !columnRef.current ||
@@ -199,7 +228,7 @@ export default function TrelloColumn({
     };
   }, [
     mouseMove.isPressed,
-    columnPress,
+    columnPress.isPress,
     leftFake,
     rightFake,
     grabTask.isMove,
@@ -224,7 +253,7 @@ export default function TrelloColumn({
     columnRef,
     isMove,
     mouseMove.isPressed,
-    columnPress,
+    columnPress.isPress,
     selectedMoveColumn,
     leftFake,
     rightFake,
