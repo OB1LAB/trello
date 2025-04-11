@@ -8,7 +8,7 @@ import LongArrowRight from "@rsuite/icons/legacy/LongArrowRight";
 import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
 import useSocketStore from "@/modules/useSocketStore/useSocketStore";
 import { ClientEvents } from "@/consts";
-import { Button, IconButton } from "rsuite";
+import { Button } from "rsuite";
 
 const TrelloTask = ({
   task,
@@ -387,7 +387,11 @@ const TrelloTask = ({
                 task.executorUserId !== task.createdUserId && (
                   <>
                     <LongArrowRight />
-                    <div>{users[task.executorUserId].label}</div>
+                    <div>
+                      {users[task.executorUserId]
+                        ? users[task.executorUserId].label
+                        : "None"}
+                    </div>
                   </>
                 )}
             </div>
