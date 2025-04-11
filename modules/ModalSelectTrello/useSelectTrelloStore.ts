@@ -80,7 +80,9 @@ export default create<ISelectTrelloStore>((set, get) => ({
           redirect(`/${selectedTrello}`);
         }, 0);
       } else {
-        redirect(`/`);
+        setTimeout(() => {
+          redirect(`/`);
+        }, 0);
       }
     }
   },
