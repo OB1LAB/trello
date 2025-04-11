@@ -1,7 +1,6 @@
 import { Button, DatePicker, Input, Modal, SelectPicker } from "rsuite";
 import useTrelloStore from "../useTrelloStore/useTrelloStore";
 import { useEffect, useState } from "react";
-import { setTimeout } from "node:timers";
 import useUserStore from "@/modules/useUserStore/useUserStore";
 import { SketchPicker } from "react-color";
 import styles from "./TrelloColumn.module.scss";
