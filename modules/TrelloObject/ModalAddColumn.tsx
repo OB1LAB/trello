@@ -1,7 +1,6 @@
 import { Button, Input, Modal } from "rsuite";
 import useTrelloStore from "../useTrelloStore/useTrelloStore";
 import { useState } from "react";
-import { setTimeout } from "node:timers";
 
 const ModalAddColumn = () => {
   const [title, setTitle] = useState<string>("");
