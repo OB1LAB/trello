@@ -16,6 +16,7 @@ export interface IUser {
   value: number;
   label: string;
   isAdmin: boolean;
+  createdByUserId: number;
 }
 
 export interface ITrello {

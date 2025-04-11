@@ -59,6 +59,19 @@ body {
   }
 }
 
+.info {
+  font-size: 16px;
+  color: #e9ebf0;
+  .block {
+    margin-left: 15px;
+    background-color: #1a1d24;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+  }
+}
+
 .modalHeader {
   text-align: center;
 }
@@ -67,6 +80,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  &.noWarp {
+    word-wrap: break-word;
+  }
   textarea {
     min-height: 195px;
   }

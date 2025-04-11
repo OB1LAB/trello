@@ -8,5 +8,6 @@ export class ClientEvents {
   static grabTask = "grabTask";
   static fakeSize = "fakeSize";
   static hovered = "hovered";
-  static grabColumn = "grabColumn";
+  static editTask = "editTask";
+  static editColumn = "editColumn";
 }

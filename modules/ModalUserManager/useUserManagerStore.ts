@@ -19,6 +19,7 @@ interface IUserManager {
     password: string,
     passwordRetry: string,
   ) => Promise<boolean>;
+  disableUser: (userId: number) => Promise<boolean>;
 }
 
 export default create<IUserManager>((set, get) => ({
@@ -60,6 +61,28 @@ export default create<IUserManager>((set, get) => ({
       toast("Пользователь успешно изменён", {
         // @ts-ignore
         render: "Пользователь успешно изменён",
+        type: "success",
+        autoClose: 3000,
+      });
+      return true;
+    } catch (e) {
+      toast("Произошла ошибка", {
+        // @ts-ignore
+        render: "Произошла ошибка",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+      return false;
+    }
+  },
+  async disableUser(userId) {
+    try {
+      await UserService.disable(userId);
+      await useUserStore.getState().getUsers(-1);
+      toast("Пользователь успешно удалён", {
+        // @ts-ignore
+        render: "Пользователь успешно удалён",
         type: "success",
         autoClose: 3000,
       });

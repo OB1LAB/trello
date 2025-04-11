@@ -6,6 +6,7 @@ import FolderOpen from "@rsuite/icons/legacy/FolderOpen";
 import Edit2 from "@rsuite/icons/legacy/Edit2";
 import Peoples from "@rsuite/icons/legacy/Peoples";
 import { useEffect, useState } from "react";
+import MousePointer from "@rsuite/icons/legacy/MousePointer";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
 
 const NavBar = () => {
@@ -21,6 +22,10 @@ const NavBar = () => {
   const [isAuth, isAdmin] = useUserStore((store) => [
     store.isAuth,
     store.isAdmin,
+  ]);
+  const [isShowMove, setIsShowMove] = useUserStore((store) => [
+    store.isShowMove,
+    store.setIsShowMove,
   ]);
   const userName = useUserStore((store) => store.userName);
   const [isEdit, setIsEdit] = useUserStore((store) => [
@@ -50,18 +55,28 @@ const NavBar = () => {
             >
               Доски
             </Nav.Item>
-            <Nav.Item
-              onClick={() => setIsModalManageUsers(true)}
-              icon={<Peoples />}
-            >
-              Юзер манагер
-            </Nav.Item>
+            {isAdmin && (
+              <Nav.Item
+                onClick={() => setIsModalManageUsers(true)}
+                icon={<Peoples />}
+              >
+                Юзер манагер
+              </Nav.Item>
+            )}
+
             <Nav.Item
               active={isEdit}
               onClick={() => setIsEdit(!isEdit)}
               icon={<Edit2 />}
             >
               Редактировать
+            </Nav.Item>
+            <Nav.Item
+              active={isShowMove}
+              onClick={() => setIsShowMove(!isShowMove)}
+              icon={<MousePointer />}
+            >
+              Live режим
             </Nav.Item>
             <Nav.Menu
               eventKey="profile"

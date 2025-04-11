@@ -9,7 +9,10 @@ const ModalUserManager = () => {
     store.isModalManageUsers,
     store.setIsModalManageUsers,
   ]);
-  const users = useUserStore((store) => store.userList);
+  const [selfUserId, users] = useUserStore((store) => [
+    store.userId,
+    store.userList,
+  ]);
   return (
     <Modal
       open={isOpen}
@@ -23,9 +26,11 @@ const ModalUserManager = () => {
       <Modal.Body className="modalBody">
         <CreateNewWorker />
         <div className={styles.workers}>
-          {users.map((user) => {
-            return <Worker user={user} key={user.value} />;
-          })}
+          {users
+            .filter((user) => user.createdByUserId === selfUserId)
+            .map((user) => {
+              return <Worker user={user} key={user.value} />;
+            })}
         </div>
       </Modal.Body>
     </Modal>

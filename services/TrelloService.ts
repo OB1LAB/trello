@@ -17,4 +17,14 @@ export default class TrelloService {
   static get(): Promise<AxiosResponse<ITrelloList>> {
     return $api.get("/trello");
   }
+  static edit(
+    trelloId: number,
+    trelloName: string,
+    accessUsers: number[],
+  ): Promise<AxiosResponse<ITrelloList>> {
+    return $api.post("/trello/edit", { trelloId, trelloName, accessUsers });
+  }
+  static disable(trelloId: number): Promise<AxiosResponse<ITrelloList>> {
+    return $api.post("/trello/disable", { trelloId });
+  }
 }

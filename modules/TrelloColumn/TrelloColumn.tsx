@@ -30,6 +30,10 @@ export default function TrelloColumn({
   });
   const [leftFake, setLeftFake] = useState<number>(0);
   const [rightFake, setRightFake] = useState<number>(0);
+  const [setIsModalEditColumn, setEditColumnIndex] = useTrelloStore((store) => [
+    store.setIsModalEditColumn,
+    store.setEditColumnIndex,
+  ]);
   const grabTask = useTrelloStore((store) => store.grabTask);
   const isHoverSocket = useTrelloStore((store) => store.isHoverSocket);
   const fakeSize = useTrelloStore((store) => store.fakeSize);
@@ -59,8 +63,15 @@ export default function TrelloColumn({
     store.setSelectedMoveColumn,
     store.setSelectedMoveTask,
   ]);
-  const [removeColumn, columns] = useTrelloStore((store) => [
-    store.removeColumn,
+  const [
+    setIsModalConfirmDelete,
+    setSelectedRemoveColumnIndex,
+    setSelectedRemoveTaskIndex,
+    columns,
+  ] = useTrelloStore((store) => [
+    store.setIsModalConfirmDelete,
+    store.setSelectedRemoveColumnIndex,
+    store.setSelectedRemoveTaskIndex,
     store.columns,
   ]);
 
@@ -146,20 +157,19 @@ export default function TrelloColumn({
     if (leftFake + rightFake > 0) {
       if (leftFake > 0) {
         moveColumn(selectedMoveColumn, columnIndex);
-        // setTimeout(() => {
         socket?.emit(ClientEvents.fakeSize, -1, -1, "left", 0, false);
-        // }, 10);
       } else if (rightFake > 0) {
         moveColumn(selectedMoveColumn, columnIndex + 1);
-        // setTimeout(() => {
         socket?.emit(ClientEvents.fakeSize, -1, -1, "right", 0, false);
-        // }, 10);
       }
       setLeftFake(0);
       setRightFake(0);
     }
     if (columnPress.x === event.clientX && columnPress.y === event.clientY) {
-      console.log("Клик по колонке");
+      if (isEdit) {
+        setEditColumnIndex(columnIndex);
+        setIsModalEditColumn(true);
+      }
     }
     setMouseMove({
       ...mouseMove,
@@ -344,9 +354,13 @@ export default function TrelloColumn({
             <div className={styles.tittleDiv}>{column.title}</div>
             {isEdit && (
               <IconButton
-                onClick={() => removeColumn(columnIndex)}
                 appearance="link"
                 color="red"
+                onClick={() => {
+                  setSelectedRemoveTaskIndex(-1);
+                  setSelectedRemoveColumnIndex(columnIndex);
+                  setIsModalConfirmDelete(true);
+                }}
                 icon={<CloseIcon />}
               />
             )}

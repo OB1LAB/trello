@@ -20,6 +20,13 @@ interface IColumnStore {
   columns: IColumn[];
   grabTask: IGrabTask;
   fakeSize: IFakeSize;
+  isModalConfirmDelete: boolean;
+  selectedRemoveColumnIndex: number;
+  selectedRemoveTaskIndex: number;
+  isModalEditColumn: boolean;
+  editColumnIndex: number;
+  isModalEditTask: boolean;
+  editTaskIndex: number;
   socketGrabTask: (
     userId: number,
     taskIndex: number,
@@ -30,8 +37,16 @@ interface IColumnStore {
     y: number,
     isMove: boolean,
   ) => void;
+  setIsModalEditColumn: (isModalEditColumn: boolean) => void;
+  setEditColumnIndex: (editColumnIndex: number) => void;
+  setIsModalEditTask: (isModalEditTask: boolean) => void;
+  setEditTaskIndex: (editTaskIndex: number) => void;
   addColumn: (title: string) => void;
-  removeColumn: (columnIndex: number) => void;
+  editColumn: (title: string) => void;
+  setIsModalConfirmDelete: (isModalConfirmDelete: boolean) => void;
+  setSelectedRemoveColumnIndex: (selectedRemoveColumnIndex: number) => void;
+  setSelectedRemoveTaskIndex: (selectedRemoveTaskIndex: number) => void;
+  removeColumnOrTask: () => void;
   moveColumn: (oldColumnIndex: number, newColumnIndex: number) => void;
   isOpenModalAddColumn: boolean;
   isOpenModalAddTask: boolean;
@@ -52,6 +67,11 @@ interface IColumnStore {
   ) => void;
   socketAddTask: (userId: number, columnIndex: number, task: ITask) => void;
   socketAddColumn: (userId: number, title: string) => void;
+  socketEditColumn: (
+    userId: number,
+    title: string,
+    columnIndex: number,
+  ) => void;
   setColumns: (columns: IColumn[]) => void;
   socketFakeSize: (
     userId: number,
@@ -61,7 +81,20 @@ interface IColumnStore {
     size: number,
     isButtonAddTask: boolean,
   ) => void;
-  socketRemoveColumn: (userId: number, columnIndex: number) => void;
+  socketRemoveColumn: (
+    userId: number,
+    columnIndex: number,
+    taskIndex: number,
+  ) => void;
+  socketEditTask: (
+    userId: number,
+    executorUserId: number,
+    timeEnd: number,
+    content: string,
+    color: string,
+    columnIndex: number,
+    taskIndex: number,
+  ) => void;
   isHoverSocket: boolean;
   socketIsHover: (userId: number, isHover: boolean) => void;
   socketMoveColumn: (
@@ -70,7 +103,6 @@ interface IColumnStore {
     newColumnIndex: number,
   ) => void;
   editTask: (
-    taskIndex: number,
     executorUserId: number,
     timeEnd: number,
     content: string,
@@ -101,6 +133,10 @@ export default create<IColumnStore>((set, get) => ({
   isHoverSocket: false,
   isOpenModalAddTask: false,
   selectedMoveColumn: -1,
+  isModalEditColumn: false,
+  isModalEditTask: false,
+  editTaskIndex: -1,
+  editColumnIndex: -1,
   selectedMoveTask: -1,
   fakeSize: {
     userId: -1,
@@ -110,6 +146,9 @@ export default create<IColumnStore>((set, get) => ({
     size: 0,
     isButtonAddTask: false,
   },
+  isModalConfirmDelete: false,
+  selectedRemoveColumnIndex: -1,
+  selectedRemoveTaskIndex: -1,
   selectedColumnIndex: 0,
   isMove: false,
   grabTask: {
@@ -127,6 +166,27 @@ export default create<IColumnStore>((set, get) => ({
   },
   setIsOpenModalAddTask(selectedColumnIndex, isOpenModalAddTask) {
     set({ selectedColumnIndex, isOpenModalAddTask });
+  },
+  setIsModalConfirmDelete: (isModalConfirmDelete) => {
+    set({ isModalConfirmDelete });
+  },
+  setSelectedRemoveColumnIndex: (selectedRemoveColumnIndex) => {
+    set({ selectedRemoveColumnIndex });
+  },
+  setSelectedRemoveTaskIndex: (selectedRemoveTaskIndex) => {
+    set({ selectedRemoveTaskIndex });
+  },
+  setIsModalEditColumn: (isModalEditColumn) => {
+    set({ isModalEditColumn });
+  },
+  setEditColumnIndex: (editColumnIndex) => {
+    set({ editColumnIndex });
+  },
+  setIsModalEditTask: (isModalEditTask) => {
+    set({ isModalEditTask });
+  },
+  setEditTaskIndex: (editTaskIndex) => {
+    set({ editTaskIndex });
   },
   setColumns(columns: IColumn[]) {
     set({ columns });
@@ -148,13 +208,21 @@ export default create<IColumnStore>((set, get) => ({
       .socket?.on(ClientEvents.moveTask, get().socketMoveTask);
     useSocketStore
       .getState()
-      .socket?.on(ClientEvents.grabTask, get().socketGrabTask);
-    useSocketStore
-      .getState()
       .socket?.on(ClientEvents.fakeSize, get().socketFakeSize);
     useSocketStore
       .getState()
       .socket?.on(ClientEvents.hovered, get().socketIsHover);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.editColumn, get().socketEditColumn);
+    useSocketStore
+      .getState()
+      .socket?.on(ClientEvents.editTask, get().socketEditTask);
+    if (useUserStore.getState().isShowMove) {
+      useSocketStore
+        .getState()
+        .socket?.on(ClientEvents.grabTask, get().socketGrabTask);
+    }
   },
   addColumn(title) {
     useSocketStore.getState().socket?.emit(ClientEvents.addColumn, title);
@@ -163,6 +231,15 @@ export default create<IColumnStore>((set, get) => ({
       title,
       tasks: [],
     });
+    set({ columns });
+  },
+  editColumn(title) {
+    const editColumnIndex = get().editColumnIndex;
+    useSocketStore
+      .getState()
+      .socket?.emit(ClientEvents.editColumn, title, editColumnIndex);
+    const columns = get().columns;
+    columns[editColumnIndex].title = title;
     set({ columns });
   },
   socketIsHover(userId, isHoverSocket) {
@@ -211,6 +288,14 @@ export default create<IColumnStore>((set, get) => ({
     };
     set({ grabTask });
   },
+  socketEditColumn(userId, title, columnIndex) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const columns = get().columns;
+    columns[columnIndex].title = title;
+    set({ columns });
+  },
   socketAddColumn(userId, title) {
     if (userId === useUserStore.getState().userId) {
       return;
@@ -222,20 +307,37 @@ export default create<IColumnStore>((set, get) => ({
     });
     set({ columns });
   },
-  removeColumn(columnIndex) {
+  removeColumnOrTask() {
+    const columns = get().columns;
+    const selectedRemoveColumnIndex = get().selectedRemoveColumnIndex;
+    const selectedRemoveTaskIndex = get().selectedRemoveTaskIndex;
     useSocketStore
       .getState()
-      .socket?.emit(ClientEvents.removeColumn, columnIndex);
-    const columns = get().columns;
-    columns.splice(columnIndex, 1);
+      .socket?.emit(
+        ClientEvents.removeColumn,
+        selectedRemoveColumnIndex,
+        selectedRemoveTaskIndex,
+      );
+    if (selectedRemoveTaskIndex === -1) {
+      columns.splice(selectedRemoveColumnIndex, 1);
+    } else {
+      columns[selectedRemoveColumnIndex].tasks.splice(
+        selectedRemoveTaskIndex,
+        1,
+      );
+    }
     set({ columns });
   },
-  socketRemoveColumn(userId, columnIndex) {
+  socketRemoveColumn(userId, columnIndex, taskIndex) {
     if (userId === useUserStore.getState().userId) {
       return;
     }
     const columns = get().columns;
-    columns.splice(columnIndex, 1);
+    if (taskIndex === -1) {
+      columns.splice(columnIndex, 1);
+    } else {
+      columns[columnIndex].tasks.splice(taskIndex, 1);
+    }
     set({ columns });
   },
   moveColumn(oldColumnIndex, newColumnIndex) {
@@ -300,6 +402,62 @@ export default create<IColumnStore>((set, get) => ({
     });
     set({ columns });
   },
+  editTask(executorUserId, timeEnd, content, color) {
+    const columns = get().columns;
+    const columnIndex = get().editColumnIndex;
+    const taskIndex = get().editTaskIndex;
+    const currentDate = columns[columnIndex].tasks[taskIndex].dateCreate;
+    const secondsOffset =
+      currentDate.getHours() * 3600 +
+      currentDate.getMinutes() * 60 +
+      currentDate.getSeconds();
+    currentDate.setHours(0);
+    currentDate.setMinutes(0);
+    currentDate.setSeconds(0);
+    timeEnd = timeEnd !== -1 ? ~~secondsOffset + timeEnd : -1;
+    useSocketStore
+      .getState()
+      .socket?.emit(
+        ClientEvents.editTask,
+        executorUserId,
+        timeEnd,
+        content,
+        color,
+        columnIndex,
+        taskIndex,
+      );
+    columns[columnIndex].tasks[taskIndex] = {
+      createdUserId: useUserStore.getState().userId,
+      executorUserId,
+      dateCreate: currentDate,
+      timeEnd,
+      content,
+      color,
+    };
+    set({ columns });
+  },
+  socketEditTask(
+    userId,
+    executorUserId,
+    timeEnd,
+    content,
+    color,
+    columnIndex,
+    taskIndex,
+  ) {
+    if (userId === useUserStore.getState().userId) {
+      return;
+    }
+    const columns = get().columns;
+    columns[columnIndex].tasks[taskIndex] = {
+      ...columns[columnIndex].tasks[taskIndex],
+      executorUserId,
+      timeEnd,
+      content,
+      color,
+    };
+    set({ columns });
+  },
   socketAddTask(userId, columnIndex, task) {
     if (userId === useUserStore.getState().userId) {
       return;
@@ -309,7 +467,6 @@ export default create<IColumnStore>((set, get) => ({
     columns[columnIndex].tasks.push(task);
     set({ columns });
   },
-  editTask(taskIndex, executorUserId, timeEnd, content, color) {},
   moveTask(oldColumnIndex, newColumnIndex, oldTaskIndex, newTaskIndex) {
     useSocketStore
       .getState()

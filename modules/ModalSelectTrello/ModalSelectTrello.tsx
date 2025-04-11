@@ -1,9 +1,14 @@
 import { Button, Modal, SelectPicker } from "rsuite";
 import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
+import BodyAddTrello from "@/modules/ModalSelectTrello/BodyAddTrello";
 import BodyEditTrello from "@/modules/ModalSelectTrello/BodyEditTrello";
-import styles from "./ModalSelectTrello.module.scss";
+import useUserStore from "@/modules/useUserStore/useUserStore";
 
 const ModalSelectTrello = () => {
+  const [selfUserId, isAdmin] = useUserStore((store) => [
+    store.userId,
+    store.isAdmin,
+  ]);
   const [isOpen, setIsOpen] = useSelectTrelloStore((store) => [
     store.isModal,
     store.setIsModal,
@@ -16,7 +21,10 @@ const ModalSelectTrello = () => {
     store.selectedTrello,
     store.setSelectedTrello,
   ]);
-  const create = useSelectTrelloStore((store) => store.create);
+  const [create, edit] = useSelectTrelloStore((store) => [
+    store.create,
+    store.edit,
+  ]);
   return (
     <Modal
       open={isOpen}
@@ -29,28 +37,50 @@ const ModalSelectTrello = () => {
       </Modal.Header>
       <Modal.Body className="modalBody">
         <SelectPicker
+          placeholder="Нет трелло для отображения"
           locale={{
             searchPlaceholder: "Поиск...",
             noResultsText: "Ничего не найдено .-.",
           }}
-          data={selectData}
+          data={
+            isAdmin ? selectData : selectData.filter((value) => value.value > 0)
+          }
           value={selectedTrello}
           cleanable={false}
           onChange={setSelectedTrello}
         />
-        {selectedTrello === -1 && <BodyEditTrello />}
+        {selectedTrello === -1 && isAdmin ? (
+          <BodyAddTrello />
+        ) : (
+          selfUserId === trelloList[selectedTrello].createdUser && (
+            <BodyEditTrello
+              trelloId={selectedTrello}
+              trelloName={trelloList[selectedTrello].trelloName}
+            />
+          )
+        )}
       </Modal.Body>
       <Modal.Footer className="modalFooter">
-        {selectedTrello === -1 && (
+        {selectedTrello === -1 && isAdmin ? (
           <Button
             appearance="primary"
             color="green"
             disabled={trelloList[selectedTrello].trelloName.length < 3}
-            onClick={async () => {
-              await create();
-            }}
+            onClick={create}
           >
             Добавить
+          </Button>
+        ) : (
+          <Button
+            appearance="primary"
+            color="green"
+            disabled={
+              trelloList[selectedTrello].trelloName.length < 3 ||
+              selfUserId !== trelloList[selectedTrello].createdUser
+            }
+            onClick={edit}
+          >
+            Изменить
           </Button>
         )}
         <Button
@@ -58,7 +88,7 @@ const ModalSelectTrello = () => {
           color="red"
           onClick={() => setIsOpen(false)}
         >
-          Отмена
+          Закрыть
         </Button>
       </Modal.Footer>
     </Modal>

@@ -12,6 +12,7 @@ export interface IUserResponse {
   id: number;
   name: string;
   isAdmin: boolean;
+  createdByUserId: number;
 }
 
 export default class UserService {
@@ -34,6 +35,14 @@ export default class UserService {
     isAdmin: boolean,
   ): Promise<AxiosResponse<IAuthResponse>> {
     return $api.post("/user/edit", { userId, password, isAdmin });
+  }
+  static disable(userId: number): Promise<AxiosResponse<IAuthResponse>> {
+    return $api.post("/user/edit", {
+      userId,
+      password: "_",
+      isAdmin: false,
+      isDeactivate: true,
+    });
   }
   static changePassword(newPassword: string): Promise<AxiosResponse> {
     return $api.post("/user/changePassword", { newPassword });

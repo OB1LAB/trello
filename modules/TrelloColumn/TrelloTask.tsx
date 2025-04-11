@@ -8,6 +8,7 @@ import LongArrowRight from "@rsuite/icons/legacy/LongArrowRight";
 import useTrelloStore from "@/modules/useTrelloStore/useTrelloStore";
 import useSocketStore from "@/modules/useSocketStore/useSocketStore";
 import { ClientEvents } from "@/consts";
+import { Button, IconButton } from "rsuite";
 
 const TrelloTask = ({
   task,
@@ -19,7 +20,16 @@ const TrelloTask = ({
   columnIndex: number;
 }) => {
   const taskRef = useRef<HTMLDivElement | null>(null);
-  const selfUserId = useUserStore((store) => store.userId);
+  const [selfUserId, isEdit] = useUserStore((store) => [
+    store.userId,
+    store.isEdit,
+  ]);
+  const [setIsModalEditTask, setEditColumnIndex, setEditTaskIndex] =
+    useTrelloStore((store) => [
+      store.setIsModalEditTask,
+      store.setEditColumnIndex,
+      store.setEditTaskIndex,
+    ]);
   const [mouseMove, setMouseMove] = useState<IMouseMove>({
     x: 0,
     y: 0,
@@ -49,6 +59,15 @@ const TrelloTask = ({
   const [selectedMoveColumn, selectedMoveTask] = useTrelloStore((store) => [
     store.selectedMoveColumn,
     store.selectedMoveTask,
+  ]);
+  const [
+    setIsModalConfirmDelete,
+    setSelectedRemoveColumnIndex,
+    setSelectedRemoveTaskIndex,
+  ] = useTrelloStore((store) => [
+    store.setIsModalConfirmDelete,
+    store.setSelectedRemoveColumnIndex,
+    store.setSelectedRemoveTaskIndex,
   ]);
   const moveTask = useTrelloStore((store) => store.moveTask);
   const [setIsMove, setSelectedMoveTask, setSelectedMoveColumn] =
@@ -112,7 +131,11 @@ const TrelloTask = ({
     }
     if (taskPress.isPress && event.button === 0) {
       if (taskPress.x === event.clientX && taskPress.y === event.clientY) {
-        console.log("Клик по таску");
+        if (isEdit) {
+          setEditColumnIndex(columnIndex);
+          setEditTaskIndex(taskIndex);
+          setIsModalEditTask(true);
+        }
       }
       setMouseMove({
         ...mouseMove,
@@ -377,6 +400,20 @@ const TrelloTask = ({
                 </>
               )}
             </div>
+            {isEdit && (
+              <Button
+                appearance="primary"
+                color="red"
+                className={styles.deleteButton}
+                onClick={() => {
+                  setSelectedRemoveColumnIndex(columnIndex);
+                  setSelectedRemoveTaskIndex(taskIndex);
+                  setIsModalConfirmDelete(true);
+                }}
+              >
+                Удалить
+              </Button>
+            )}
           </div>
         </div>
       </div>

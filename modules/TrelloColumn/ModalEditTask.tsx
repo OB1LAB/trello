@@ -1,14 +1,14 @@
 import { Button, DatePicker, Input, Modal, SelectPicker } from "rsuite";
 import useTrelloStore from "../useTrelloStore/useTrelloStore";
 import { useEffect, useState } from "react";
-import { setTimeout } from "node:timers";
-import useUserStore from "@/modules/useUserStore/useUserStore";
 import { SketchPicker } from "react-color";
 import styles from "./TrelloColumn.module.scss";
-import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
+import moment from "moment/moment";
 import { ISelectPickerData } from "@/ifaces";
+import useSelectTrelloStore from "@/modules/ModalSelectTrello/useSelectTrelloStore";
+import useUserStore from "@/modules/useUserStore/useUserStore";
 
-const ModalAddTask = () => {
+const ModalEditTask = () => {
   const [selectedColor, setSelectedColor] = useState<string>("#f0f");
   const [content, setContent] = useState<string>("");
   const [executorId, setExecutorId] = useState<null | number>(null);
@@ -22,54 +22,82 @@ const ModalAddTask = () => {
     store.userListId,
   ]);
   const [users, setUsers] = useState<ISelectPickerData[]>([]);
-  const [isOpen, setIsOpen, addTask] = useTrelloStore((store) => [
-    store.isOpenModalAddTask,
-    store.setIsOpenModalAddTask,
-    store.addTask,
-  ]);
-  const addNewTask = () => {
+  const [columns, isOpen, setIsOpen, editTask, editColumnIndex, editTaskIndex] =
+    useTrelloStore((store) => [
+      store.columns,
+      store.isModalEditTask,
+      store.setIsModalEditTask,
+      store.editTask,
+      store.editColumnIndex,
+      store.editTaskIndex,
+    ]);
+  const editCurrentTask = () => {
     if (content.length < 3) {
       return;
     }
-    addTask(
+    editTask(
       executorId ? executorId : -1,
-      dateEnd ? ~~((dateEnd?.getTime() - new Date().getTime()) / 1000) : -1,
+      dateEnd
+        ? ~~(
+            (dateEnd?.getTime() -
+              columns[editColumnIndex].tasks[
+                editTaskIndex
+              ].dateCreate.getTime()) /
+            1000
+          )
+        : -1,
       content,
       selectedColor,
     );
-    setIsOpen(-1, false);
-    setTimeout(() => {
-      setContent("");
-      setExecutorId(null);
-      setDateEnd(null);
-    }, 500);
+    setIsOpen(false);
   };
   useEffect(() => {
-    if (Object.keys(trelloList).includes(selectedTrello.toString())) {
-      setUsers(
-        [
-          ...trelloList[selectedTrello].accessUsers,
-          trelloList[selectedTrello].createdUser,
-        ]
-          .filter((value) => value !== selfUserId)
-          .map((value) => {
-            return {
-              label: usersId[value].label,
-              value,
-            };
-          }),
+    if (
+      isOpen &&
+      columns[editColumnIndex] &&
+      columns[editColumnIndex].tasks[editTaskIndex]
+    ) {
+      setSelectedColor(columns[editColumnIndex].tasks[editTaskIndex].color);
+      setContent(columns[editColumnIndex].tasks[editTaskIndex].content);
+      setExecutorId(
+        columns[editColumnIndex].tasks[editTaskIndex].executorUserId,
       );
+      if (columns[editColumnIndex].tasks[editTaskIndex].timeEnd > 0) {
+        setDateEnd(
+          moment(
+            columns[editColumnIndex].tasks[editTaskIndex].timeEnd * 1000 +
+              columns[editColumnIndex].tasks[
+                editTaskIndex
+              ].dateCreate.getTime(),
+          ).toDate(),
+        );
+      }
+      if (Object.keys(trelloList).includes(selectedTrello.toString())) {
+        setUsers(
+          [
+            ...trelloList[selectedTrello].accessUsers,
+            trelloList[selectedTrello].createdUser,
+          ]
+            .filter((value) => value !== selfUserId)
+            .map((value) => {
+              return {
+                label: usersId[value].label,
+                value,
+              };
+            }),
+        );
+      }
     }
-  }, []);
+  }, [isOpen]);
   return (
     <Modal
       open={isOpen}
       onClose={() => {
-        setIsOpen(-1, false);
+        setIsOpen(false);
       }}
     >
       <Modal.Header className="modalHeader">
-        <Modal.Title>Добавление задачи</Modal.Title>
+        <Modal.Title>Изменение задачи</Modal.Title>
       </Modal.Header>
       <Modal.Body className="modalBody">
         <div className={styles.contentInput}>
@@ -83,7 +111,7 @@ const ModalAddTask = () => {
               onChange={setContent}
               as="textarea"
               placeholder="Задача"
-              onPressEnter={addNewTask}
+              onPressEnter={editCurrentTask}
             />
             <div className={styles.taskPicker}>
               <SelectPicker
@@ -113,15 +141,15 @@ const ModalAddTask = () => {
         <Button
           appearance="primary"
           color="green"
-          onClick={() => addNewTask()}
+          onClick={() => editCurrentTask()}
           disabled={content.length < 3}
         >
-          Добавить
+          Изменить
         </Button>
         <Button
           appearance="primary"
           color="red"
-          onClick={() => setIsOpen(-1, false)}
+          onClick={() => setIsOpen(false)}
         >
           Отмена
         </Button>
@@ -130,4 +158,4 @@ const ModalAddTask = () => {
   );
 };
 
-export default ModalAddTask;
+export default ModalEditTask;
