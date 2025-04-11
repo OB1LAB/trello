@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Информация
+Сайт для распределения задач между командой при совместной разработке
 
-## Getting Started
+# Trello Frontend
+Клиентская часть проекта. Серверная часть находится [здесь](https://github.com/OB1LAB/trello_backend)
 
-First, run the development server:
+# Установка
+1. git clone https://github.com/OB1LAB/trello
+2. cd trello
+3. npm install
+4. nano .env.production (Указываем своё API)
+5. npm run build
+6. pm2 start npm --name "trello_frontend" -- start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+# Возможности
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Термины
+* Админ - Пользователь с правами администратора.
+* Пользователь - Пользователь без прав администратора.
+* Деактивация - Скрыть аккаунт/Трелло с сайта.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Аккаунты
+* Админ не может редактировать админа.
+* Админ может редактировать только того пользователя, которого сам же и зарегистрировал, менять ему пароль, делать админом или деактировать аккаунт.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Трелло
+* Админ может создавть сколько угодно трелло и добавлять в него сколько угодно участников.
+* Максимальное количество колонок - 5.
+* Все видят только те трелло, в которых состоят. Даже админам не видны все трелло на сайте.
+* Создавать могут только админы.
+* Редактировать трелло могут только админы. (Название, список участников, деактивировать)
+* Админы в трелло могут создавать колонки с задачами, редактировать их и удалять, даже если они не создатели этого трелло.
+* Пользователь не может создавать колонки и перемещать их.
+* Пользователь может создавать задачи.
+* Пользователь может редактировать и удалять только те задачи, которые он сам и создал.
+* Пользователь может перемещать только задачи, которые он сам создал или является их исполнителем.
 
-## Learn More
+### Термины
+* Live - Отображение перемещения колонок и задач в реальном времени.
+* Редактировать - Отображение кнопок создание/Удаление колонок. Изменение задач/Колонок, по клику на них.
 
-To learn more about Next.js, take a look at the following resources:
+## Скриншоты
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+![Начальная страница.](https://altromon.ob1lab.ru/static/trello/trello_0.png "Начальная страница.")
+![Выбор трелло.](https://altromon.ob1lab.ru/static/trello/trello_1.png "Выбор трелло.")
+![Выбранное трелло.](https://altromon.ob1lab.ru/static/trello/trello_2.png "Выбранное трелло.")
+![Изменение задачи.](https://altromon.ob1lab.ru/static/trello/trello_3.png "Изменение задачи.")
+![Управление пользователями.](https://altromon.ob1lab.ru/static/trello/trello_4.png "Управление пользователями.")
